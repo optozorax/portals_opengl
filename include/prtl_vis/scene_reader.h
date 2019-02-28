@@ -5,10 +5,10 @@
 #include <spob/spob.h>
 #include <json.hpp>
 
-using json = nlohmann::json;
-
 namespace scene
 {
+	using json = nlohmann::json;
+	
 	struct Scene;
 	struct Frame;
 	struct TexturedPolygon;
@@ -34,23 +34,18 @@ namespace scene
 		spob::plane3 crd;
 		std::vector<spob::vec2> polygon;
 		std::vector<spob::vec2> tex_coords;
-		int texture;
+		int texture_id;
 	};
 
-	/*struct sTexture
+	struct Texture
 	{
-	private:
-		sTexture(std::string )
-		~sTexture();
-
+		std::string filename;
 		int id;
-	private:
-		void* data;
-	};*/
+	};
 
 	struct Frame
 	{
-		//std::vector<Textures> ;
+		std::vector<Texture> textures;
 		std::vector<TexturedPolygon> textured_polygons;
 		std::vector<ColoredPolygon> colored_polygons;
 		std::vector<Portal> portals;
@@ -64,7 +59,7 @@ namespace scene
 
 	Scene parseScene(const json& obj);
 	Frame parseFrame(const json& obj);
-	//sTexture parseTexture(const json& obj);
+	Texture parseTexture(const json& obj);
 	TexturedPolygon parseTexturedPolygon(const json& obj);
 	ColoredPolygon parseColoredPolygon(const json& obj);
 	Portal parsePortal(const json& obj);
@@ -74,7 +69,7 @@ namespace scene
 
 	json unparse(const Scene& scene);
 	json unparse(const Frame& frame);
-	//json unparse(const sTexture& texture);
+	json unparse(const Texture& texture);
 	json unparse(const TexturedPolygon& textured_polygon);
 	json unparse(const ColoredPolygon& colored_polygon);
 	json unparse(const Portal& portal);

@@ -1,12 +1,15 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <iomanip>
 #include <GL/glew.h>
 #include <GL/glut.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <spob/spob.h>
 #include <array>
+
+#include <json.hpp>
 
 #include <prtl_vis/scene_reader.h>
 #include <prtl_vis/opengl_common.h>
@@ -24,14 +27,29 @@ int w = 800, h = 600;
 glm::vec3 cam_spheric_pos;
 glm::vec3 cam_rotate_around;
 
+int drawTime = 0, drawCount = 0;
+
+void writeFps(int value) {
+	if (drawCount != 0) {
+		std::cout << 1000.0 / (drawTime / drawCount) << " fps, drawCount: " << drawCount << std::endl;
+		drawTime = 0;
+		drawCount = 0;
+	}
+	glutTimerFunc(1000, writeFps, 100);
+}
+
 //-----------------------------------------------------------------------------
 void display() {
-    glClearColor(0.3, 0.3, 0.3, 1.0);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	int timeSinceStart = glutGet(GLUT_ELAPSED_TIME);
+    glClearColor(0.6, 0.6, 0.3, 1.0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	
 	sceneDrawer->drawAll(w, h);
 
 	glutSwapBuffers();
+
+	drawTime += glutGet(GLUT_ELAPSED_TIME) - timeSinceStart;
+	drawCount++;
 }
 
 //-----------------------------------------------------------------------------
@@ -98,7 +116,7 @@ void mouse(int button, int state, int x, int y) {
 void motion(int x, int y) {
 	if (l_moving) {
 		cam_spheric_pos.x = glm::radians(glm::degrees(cam_spheric_pos.x) - 0.5*(x - l_startx));
-		cam_spheric_pos.y = glm::radians(glm::degrees(cam_spheric_pos.y) + 0.5*(y - l_starty));
+		cam_spheric_pos.y = glm::radians(glm::degrees(cam_spheric_pos.y) - 0.5*(y - l_starty));
 		l_startx = x;
 		l_starty = y;
 		update_cam();
@@ -137,6 +155,9 @@ void keyboard(unsigned char key, int x, int y) {
 	if (key == '{') wheel(0, 1, 0, 0);
 	if (key == '}') wheel(0, -1, 0, 0);
 
+	if (key == '+' || key == '=') ++(*sceneDrawer);
+	if (key == '-') --(*sceneDrawer);
+
 	update_cam();
 
 	glutPostRedisplay();
@@ -144,61 +165,6 @@ void keyboard(unsigned char key, int x, int y) {
 
 //-----------------------------------------------------------------------------
 void init() {
-	const spob::vec3 portalColor0(1, 0.5, 0.15); // orange
-	const spob::vec3 portalColor1(0.1, 0.55, 1); // blue
-
-	scene::Scene s;
-
-	s.frames.push_back({});
-	auto& polygons = s.frames.back().colored_polygons;
-	auto& portals = s.frames.back().portals;
-	spob::vec3 i(1, 0, 0), j(0, 1, 0), k(0, 0, 1);
-
-	std::vector<spob::vec2> pPoly = {{0, 0}, {-0.3, 0.7}, {0.3, 0.7}};
-	spob::plane3 cPoly(i, j, k, {0.5, 0.5, 0.5});
-	polygons.push_back({cPoly, pPoly, {0.5, 0.5, 0.5}});
-
-	s.cam_rotate_around = cPoly.from((pPoly[0] + pPoly[1] + pPoly[2]) / 3.0);
-	s.cam_spheric_pos = {spob::deg2rad(30.0), spob::deg2rad(30.0), 3};
-
-	double angle = _SPOB_PI/6;
-	double xl = 0.5 / cos(angle);
-
-	std::vector<spob::vec2> pPortal1 = {{xl, 0}, {0, 0}, {0, 1}, {xl, 1}};
-	std::vector<spob::vec2> pPortal2 = {{0, 1}, {xl, 1}, {xl, 0}, {0, 0}};
-
-	spob::space3 cPortal1(i, k, j, spob::vec3(0));
-	cPortal1 = spob::rotate(cPortal1, spob::vec3(angle, 0, 0));
-
-	spob::space3 cPortal2 = cPortal1;
-	cPortal2.pos = cPortal1.pos + cPortal1.i * xl;
-	cPortal2 = spob::rotate(cPortal2, spob::vec3(-angle * 2, 0, 0));
-
-	spob::space3 cPortal11 = cPortal1;
-	cPortal11.pos.y += 1.5;
-	spob::space3 cPortal21 = cPortal2;
-	cPortal21.pos.y += 1.5;
-
-	portals.push_back({cPortal1, cPortal11, pPortal1, portalColor0, portalColor1});
-	portals.push_back({cPortal2, cPortal21, pPortal2, portalColor0, portalColor1});
-
-	double size = 5.0;
-	std::vector<spob::vec2> square = {
-		{-1, -1}, 
-		{-1, 1}, 
-		{1, 1}, 
-		{1, -1}, 
-	};
-
-	i *= size; j *= size; k *= size;
-	polygons.push_back({spob::plane3(i, j, k, k),  square, {0.5, 0, 0}});
-	polygons.push_back({spob::plane3(i, j, k, -k), square, {0, 0.5, 0}});
-	polygons.push_back({spob::plane3(i, k, j, j),  square, {0, 0, 0.5}});
-	polygons.push_back({spob::plane3(i, k, j, -j), square, {0.5, 0.5, 0}});
-	polygons.push_back({spob::plane3(k, j, i, i),  square, {0.5, 0, 0.5}});
-	polygons.push_back({spob::plane3(k, j, i, -i), square, {0, 0.5, 0.5}});
-
-	sceneDrawer = new SceneDrawer(s, cam_rotate_around, cam_spheric_pos);
 }
 
 //-----------------------------------------------------------------------------
@@ -206,8 +172,17 @@ void init() {
 //-----------------------------------------------------------------------------
 
 int main(int argc, char** argv) {
+	std::string filename = "scene.json";
+	if (argc > 1)
+		filename = std::string(argv[1]);
+
+	scene::json js;
+	std::ifstream fin(filename);
+	fin >> js;
+	fin.close();
+
 	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH | GLUT_STENCIL);
 	glutInitWindowPosition(80, 80);
 	glutInitWindowSize(w, h);
 	glutCreateWindow("Portal viewer");
@@ -226,6 +201,7 @@ int main(int argc, char** argv) {
 	glutMouseFunc(mouse);
 	glutMotionFunc(motion);
 	glutKeyboardFunc(keyboard);
+	glutTimerFunc(1000, writeFps, 100);
 
 	glEnable(GL_DEPTH_TEST);
 	//glEnable(GL_TEXTURE_2D);
@@ -239,5 +215,6 @@ int main(int argc, char** argv) {
 	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
 	init();
+	sceneDrawer = new SceneDrawer(scene::parseScene(js), cam_rotate_around, cam_spheric_pos);
 	glutMainLoop();
 }

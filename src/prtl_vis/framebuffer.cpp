@@ -275,7 +275,7 @@ PolygonFramebufferDrawer::PolygonFramebufferDrawer() {
 }
 
 //-----------------------------------------------------------------------------
-void PolygonFramebufferDrawer::draw(const FrameBuffer& f1, const std::vector<glm::vec4>& poly) {
+void PolygonFramebufferDrawer::draw(const FrameBuffer& f1, const std::vector<Fragment>& fragments) {
 	static PolygonFramebufferDrawer drawer;
 	glUseProgram(drawer.program);
 		glActiveTexture(GL_TEXTURE0);
@@ -286,9 +286,10 @@ void PolygonFramebufferDrawer::draw(const FrameBuffer& f1, const std::vector<glm
 		glUniform1i(drawer.cID, 0);
 		glUniform1i(drawer.dID, 1);
 
-		glBegin(GL_POLYGON);
+		/*glBegin(GL_POLYGON);
 		for (auto& i : poly)
 			glVertex3f(i.x, i.y, i.z);
-		glEnd();
+		glEnd();*/
+		drawFragments(fragments);
 	glUseProgram(0);
 }

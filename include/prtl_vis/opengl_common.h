@@ -1,9 +1,11 @@
 #pragma once
 
+#include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <spob/spob.h>
 #include <vector>
 #include <prtl_vis/plane.h>
+#include <prtl_vis/fragment.h>
 #include <prtl_vis/scene_reader.h>
 
 //-----------------------------------------------------------------------------
@@ -20,20 +22,21 @@ private:
 	struct PortalToDraw
 	{
 		std::vector<glm::vec4> polygon;
+		std::vector<Fragment> fragments;
 		glm::mat4 teleport;
 		Plane plane;
 		bool isInvert;
+		bool isTeleportInvert;
 		glm::vec3 color;
 	};
 
 	struct ColoredPolygonToDraw {
-	    std::vector<glm::vec4> polygon;
+	    std::vector<Fragment> fragments;
 		glm::vec3 color;
 	};
 
 	struct TexturedPolygonToDraw {
-	    std::vector<glm::vec4> polygon;
-	    std::vector<glm::vec4> texCoords;
+	    std::vector<TexFragment> fragments;
 	    GLuint texture;
 	};
 
@@ -57,6 +60,7 @@ private:
 	int w, h;
 	int frame;
 	int frame_max;
+	bool clockWiseInvert;
 };
 
 //-----------------------------------------------------------------------------
@@ -74,3 +78,4 @@ glm::vec3 cartesian2spheric(glm::vec3 spheric);
 
 std::vector<glm::vec4> projectPolygonToScreen(const std::vector<glm::vec4>& polygon);
 bool isPolygonOrientedClockwise(const std::vector<glm::vec4>& polygon);
+std::vector<spob::vec2> orientPolygonClockwise(const std::vector<spob::vec2>& polygon);

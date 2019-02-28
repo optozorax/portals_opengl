@@ -1,4 +1,5 @@
 #include <array>
+#include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -14,17 +15,24 @@ SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around
 		frames.emplace_back();
 		Frame& f = frames.back();
 		for (auto& j : i.portals) {
-			auto result = makeDrawPortal(j.polygon, j.crd1, j.crd2, j.color1, j.color2);
+			auto result = makeDrawPortal(orientPolygonClockwise(j.polygon), j.crd1, j.crd2, j.color1, j.color2);
 			f.portals.push_back(result.first);
 			f.portals.push_back(result.second);
 		}
 		for (auto& j : i.colored_polygons) {
-			f.colored_polygons.push_back({spob2glm(j.polygon, j.crd), spob2glm(j.color)});
+			f.colored_polygons.push_back({
+				Fragmentator::fragmentize(spob2glm(orientPolygonClockwise(j.polygon), j.crd)),
+				spob2glm(j.color)
+			});
 		}
-		for (auto& j : i.textured_polygons) {
-			f.textured_polygons.push_back({spob2glm(j.polygon, j.crd), spob2glm(j.tex_coords), GLuint(j.texture)});
-		}
+		/*for (auto& j : i.textured_polygons) {
+			f.textured_polygons.push_back({
+				Fragmentator::fragmentize(spob2glm(j.polygon, j.crd), spob2glm(j.tex_coords)), 
+				GLuint(j.texture)
+			});
+		}*/
 	}
+	frame_max = frames.size();
 }
 
 //-----------------------------------------------------------------------------
@@ -39,6 +47,7 @@ void SceneDrawer::drawAll(int width, int height) {
 
 	w = width; h = height;
 
+	clockWiseInvert = false;
 	const FrameBuffer& f = FrameBufferGetter::get(w, h, true);
 	f.activate();
 	drawScene(1);
@@ -53,7 +62,8 @@ void SceneDrawer::drawPortal(const PortalToDraw& portal, int depth) {
 
 	// Проверка на то, находится ли полигон внутри рисуемой полуплоскости
 	if (depth == 1 || isPolygonBehindPlane(ClipPlane::getCurrentPlane(), portal.polygon)) {
-		if (isPolygonOrientedClockwise(projectPolygonToScreen(portal.polygon)) ^ !portal.isInvert) {
+		if (isPolygonOrientedClockwise(projectPolygonToScreen(portal.polygon)) ^ (portal.isInvert ^ !clockWiseInvert)) {
+			if (portal.isTeleportInvert) clockWiseInvert = !clockWiseInvert;
 			// Рисуем портал и сцену с ним
 			const FrameBuffer& f = FrameBufferGetter::get(w, h, true);
 			f.activate();
@@ -65,15 +75,17 @@ void SceneDrawer::drawPortal(const PortalToDraw& portal, int depth) {
 			ClipPlane::disable();
 			f.disable();
 
-			PolygonFramebufferDrawer::draw(f, portal.polygon);
+			PolygonFramebufferDrawer::draw(f, portal.fragments);
 			FrameBufferGetter::unget();
+			if (portal.isTeleportInvert) clockWiseInvert = !clockWiseInvert;
 		} else {
 			// Рисуем обратную сторону портала с указанным цветом
 			glColor3f(portal.color.x, portal.color.y, portal.color.z);
-			glBegin(GL_POLYGON);
+			drawFragments(portal.fragments);
+			/*glBegin(GL_POLYGON);
 			for (const auto& i :portal.polygon)
 				glVertex3f(i.x, i.y, i.z);
-			glEnd();
+			glEnd();*/
 		}
 	}
 }
@@ -110,33 +122,35 @@ void SceneDrawer::drawScene(int depth) {
 	// Рисуем все полигоны
 	for (auto& i : colored_polygons) {
 		glColor3f(i.color.x, i.color.y, i.color.z);
-        glBegin(GL_POLYGON);
+        /*glBegin(GL_TRIANGLE_FAN);
         for (auto& j : i.polygon)
             glVertex3f(j.x, j.y, j.z);
-        glEnd();
+        glEnd();*/
+		//drawConcavePolygon(i.polygon);
+		drawFragments(i.fragments);
 	}
 
-	for (auto& i : textured_polygons) {
+	/*for (auto& i : textured_polygons) {
         glBindTexture(GL_TEXTURE_2D, i.texture);
         glBegin(GL_POLYGON);
         for (auto& j : i.polygon)
             glVertex3f(j.x, j.y, j.z);
         glEnd();
         glBindTexture(GL_TEXTURE_2D, 0);
-	}
+	}*/
 }
 
 //-----------------------------------------------------------------------------
 SceneDrawer& SceneDrawer::operator++(void) {
-	frame++;
-	if (frame == frame_max) frame = 0;
+	if (frame+1 == frame_max) frame = 0;
+	else frame++;
 	return *this;
 }
 
 //-----------------------------------------------------------------------------
 SceneDrawer& SceneDrawer::operator--(void) {
-	frame--;
-	if (frame == -1) frame = frame_max - 1;
+	if (frame == 0) frame = frame_max-1;
+	else frame--;
 	return *this;
 }
 
@@ -156,6 +170,9 @@ std::pair<SceneDrawer::PortalToDraw, SceneDrawer::PortalToDraw> SceneDrawer::mak
 		p1.polygon.push_back(spob2glm(spob::plane3(crd2).from(i)));
 	}
 
+	p1.fragments = Fragmentator::fragmentize(p1.polygon);
+	p2.fragments = Fragmentator::fragmentize(p2.polygon);
+
 	p1.plane.x = crd1.k.x;
 	p1.plane.y = crd1.k.y;
 	p1.plane.z = crd1.k.z;
@@ -166,8 +183,18 @@ std::pair<SceneDrawer::PortalToDraw, SceneDrawer::PortalToDraw> SceneDrawer::mak
 	p2.plane.z = -crd2.k.z;
 	p2.plane.w = dot(crd2.pos, crd2.k);
 
+	/*std::swap(p1.plane, p2.plane);
+	p1.plane.invert();
+	p2.plane.invert();*/
+
 	p1.isInvert = true;
 	p2.isInvert = false;
+
+	if (crd1.isRight()) p2.polygon = std::vector<glm::vec4>(p2.polygon.rbegin(), p2.polygon.rend());
+	if (crd2.isRight()) p1.polygon = std::vector<glm::vec4>(p1.polygon.rbegin(), p1.polygon.rend());
+
+	p1.isTeleportInvert = crd1.isRight() ^ crd2.isRight();
+	p2.isTeleportInvert = crd1.isRight() ^ crd2.isRight();
 
 	p1.color = spob2glm(clr1);
 	p2.color = spob2glm(clr2);
@@ -281,4 +308,20 @@ bool isPolygonOrientedClockwise(const std::vector<glm::vec4>& polygon) {
 		sum += (polygon[i+1].x-polygon[i].x)*(polygon[i+1].y+polygon[i].y);
 	sum += (polygon[0].x-polygon[polygon.size() - 1].x)*(polygon[0].y+polygon[polygon.size() - 1].y);
 	return sum > 0;
+}
+
+bool isPolygonOrientedClockwise(const std::vector<spob::vec2>& polygon) {
+	double sum = 0;
+	for (int i = 0; i < polygon.size() - 1; i++)
+		sum += (polygon[i + 1].x - polygon[i].x)*(polygon[i + 1].y + polygon[i].y);
+	sum += (polygon[0].x - polygon[polygon.size() - 1].x)*(polygon[0].y + polygon[polygon.size() - 1].y);
+	return sum > 0;
+}
+
+//-----------------------------------------------------------------------------
+std::vector<spob::vec2> orientPolygonClockwise(const std::vector<spob::vec2>& polygon) {
+	if (isPolygonOrientedClockwise(polygon))
+		return polygon;
+	else
+		return std::vector<spob::vec2>(polygon.rbegin(), polygon.rend());
 }

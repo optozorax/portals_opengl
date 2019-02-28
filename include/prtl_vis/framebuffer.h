@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <vector>
+#include <prtl_vis/fragment.h>
 
 class FrameBufferDrawer;
 
@@ -82,7 +83,7 @@ private:
 class PolygonFramebufferDrawer
 {
 public:
-	static void draw(const FrameBuffer& f1, const std::vector<glm::vec4>& poly);
+	static void draw(const FrameBuffer& f1, const std::vector<Fragment>& fragments);
 private:
 	GLuint program;
 	GLuint cID, dID;
