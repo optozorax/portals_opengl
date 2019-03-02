@@ -9,8 +9,10 @@
 #include <prtl_vis/framebuffer.h>
 #include <prtl_vis/opengl_common.h>
 
+#include <clipper.hpp>
+
 //-----------------------------------------------------------------------------
-SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos) : depthMax(6), frame(0) {
+SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos, int maxDepth) : depthMax(maxDepth), frame(0) {
 	cam_rotate_around = spob2glm(scene.cam_rotate_around);
 	cam_spheric_pos = spob2glm(scene.cam_spheric_pos);
 	for (auto& i : scene.frames) {
@@ -68,6 +70,7 @@ int SceneDrawer::drawAll(int width, int height) {
 
 	w = width; h = height;
 
+	projectedPortalView.push({ { {0, 0, 0, 0}, {0, h, 0, 0}, {w, h, 0, 0}, {w, 0, 0, 0} } });
 	drawSceneCount = 0;
 	clockWiseInvert = false;
 	const FrameBuffer& f = FrameBufferGetter::get(w, h, true);
@@ -76,6 +79,7 @@ int SceneDrawer::drawAll(int width, int height) {
 	f.disable();
 	FrameBufferDrawer::draw(f);
 	FrameBufferGetter::unget();
+	projectedPortalView.pop();
 
 	return drawSceneCount;
 }
@@ -93,9 +97,18 @@ void SceneDrawer::drawPortal(const PortalToDraw& portal, int depth) {
 		isBehindPlane = isPolygonBehindPlane(clipPlane, portal.polygon);
 	}
 	if (isBehindPlane) {
+		auto projected = projectPolygonToScreen(portal.polygon);
+
+		auto intersected = intersect(projectedPortalView.top(), projected);
+		bool isVisibleOnScreen = intersected.size() != 0;
+		if (!isVisibleOnScreen) return;
+
+		projectedPortalView.push(intersected);
+
+		// Определяем, как ориентирован портал. Если по часовой стрелке, то можно рисовать, иначе рисуем обратную сторону портала.
 		bool isInvert = portal.isInvert;
 		if (clockWiseInvert) isInvert = !isInvert;
-		bool isDraw = isPolygonOrientedClockwise(projectPolygonToScreen(portal.polygon));
+		bool isDraw = isPolygonOrientedClockwise(projected);
 		if (!isInvert) isDraw = !isDraw;
 		if (isDraw) {
 			if (portal.isTeleportInvert) clockWiseInvert = !clockWiseInvert;
@@ -131,6 +144,8 @@ void SceneDrawer::drawPortal(const PortalToDraw& portal, int depth) {
 			glColor3f(portal.color.x, portal.color.y, portal.color.z);
 			drawFragments(portal.fragments);
 		}
+
+		projectedPortalView.pop();
 	}
 }
 
@@ -349,6 +364,41 @@ std::vector<glm::vec4> projectPolygonToScreen(const std::vector<glm::vec4>& poly
 				   modelview.data(), projection.data(), viewport.data(),
 				   &projected[0], &projected[1], &projected[2]);
 		result.push_back(glm::vec4(projected[0], projected[1], projected[2], 1.0));
+	}
+
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+std::vector<std::vector<glm::vec4>> intersect(const std::vector<std::vector<glm::vec4>>& a, const std::vector<glm::vec4>& b) {
+	std::vector<std::vector<glm::vec4>> result;
+
+	if (a.empty() || b.empty())
+		return result;
+
+	using namespace ClipperLib;
+	Path clip;
+	Paths subj(a.size());
+	Paths solution;
+
+	for (int i = 0; i < a.size(); ++i) {
+		for (const auto& j : a[i]) {
+			subj[i].push_back(IntPoint(j.x, j.y));
+		}
+	}
+	for (const auto& i : b) {
+		clip.push_back(IntPoint(i.x, i.y));
+	}
+
+	Clipper c;
+	c.AddPaths(subj, ptSubject, true);
+	c.AddPath(clip, ptClip, true);
+	c.Execute(ctIntersection, solution, pftNonZero, pftNonZero);
+
+	for (auto& i : solution) {
+		result.push_back({});
+		for (auto& j : i)
+			result.back().push_back(glm::vec4(j.X, j.Y, 0, 1));
 	}
 
 	return result;

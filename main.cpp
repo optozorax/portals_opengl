@@ -213,6 +213,6 @@ int main(int argc, char** argv) {
 	//glBindTexture(GL_TEXTURE_2D, 0);
 
 	init();
-	sceneDrawer = new SceneDrawer(scene::parseScene(js), cam_rotate_around, cam_spheric_pos);
+	sceneDrawer = new SceneDrawer(scene::parseScene(js), cam_rotate_around, cam_spheric_pos, 6);
 	glutMainLoop();
 }

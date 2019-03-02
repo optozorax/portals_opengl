@@ -15,9 +15,11 @@
 class SceneDrawer
 {
 public:
-	SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos);
+	SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos, int maxDepth);
 
 	int drawAll(int width, int height);
+
+	void setMaxDepth(int maxDepth) { depthMax = maxDepth; }
 
 	SceneDrawer& operator++(void);
 	SceneDrawer& operator--(void);
@@ -69,6 +71,7 @@ private:
 	std::stack<int> currentDrawPortal;
 	bool clockWiseInvert;
 	std::stack<glm::mat4> currentTeleportMatrix;
+	std::stack<std::vector<std::vector<glm::vec4>>> projectedPortalView;
 };
 
 //-----------------------------------------------------------------------------
@@ -85,6 +88,7 @@ glm::vec3 spheric2cartesian(glm::vec3 cartesian);
 glm::vec3 cartesian2spheric(glm::vec3 spheric);
 
 std::vector<glm::vec4> projectPolygonToScreen(const std::vector<glm::vec4>& polygon);
+std::vector<std::vector<glm::vec4>> intersect(const std::vector<std::vector<glm::vec4>>& a, const std::vector<glm::vec4>& b);
 
 template<class T>
 bool isPolygonOrientedClockwise(const std::vector<T>& polygon);
