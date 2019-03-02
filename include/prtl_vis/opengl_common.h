@@ -1,9 +1,12 @@
 #pragma once
 
+#include <vector>
+#include <stack>
+
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <spob/spob.h>
-#include <vector>
+
 #include <prtl_vis/plane.h>
 #include <prtl_vis/fragment.h>
 #include <prtl_vis/scene_reader.h>
@@ -60,7 +63,9 @@ private:
 	int w, h;
 	int frame;
 	int frame_max;
+	std::stack<int> currentDrawPortal;
 	bool clockWiseInvert;
+	std::stack<glm::mat4> currentTeleportMatrix;
 };
 
 //-----------------------------------------------------------------------------
@@ -77,5 +82,27 @@ glm::vec3 spheric2cartesian(glm::vec3 cartesian);
 glm::vec3 cartesian2spheric(glm::vec3 spheric);
 
 std::vector<glm::vec4> projectPolygonToScreen(const std::vector<glm::vec4>& polygon);
-bool isPolygonOrientedClockwise(const std::vector<glm::vec4>& polygon);
-std::vector<spob::vec2> orientPolygonClockwise(const std::vector<spob::vec2>& polygon);
+
+template<class T>
+bool isPolygonOrientedClockwise(const std::vector<T>& polygon);
+template<class T>
+std::vector<T> orientPolygonClockwise(const std::vector<T>& polygon);
+
+//-----------------------------------------------------------------------------
+template<class T>
+bool isPolygonOrientedClockwise(const std::vector<T>& polygon) {
+	double sum = 0;
+	for (int i = 0; i < polygon.size() - 1; i++)
+		sum += (polygon[i + 1].x - polygon[i].x)*(polygon[i + 1].y + polygon[i].y);
+	sum += (polygon[0].x - polygon[polygon.size() - 1].x)*(polygon[0].y + polygon[polygon.size() - 1].y);
+	return sum > 0;
+}
+
+//-----------------------------------------------------------------------------
+template<class T>
+std::vector<T> orientPolygonClockwise(const std::vector<T>& polygon) {
+	if (isPolygonOrientedClockwise(polygon))
+		return polygon;
+	else
+		return std::vector<T>(polygon.rbegin(), polygon.rend());
+}

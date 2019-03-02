@@ -1,4 +1,5 @@
 #include <array>
+#include <mutex>
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
@@ -8,7 +9,7 @@
 #include <prtl_vis/opengl_common.h>
 
 //-----------------------------------------------------------------------------
-SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos) : depthMax(3), frame(0) {
+SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos) : depthMax(6), frame(0) {
 	cam_rotate_around = spob2glm(scene.cam_rotate_around);
 	cam_spheric_pos = spob2glm(scene.cam_spheric_pos);
 	for (auto& i : scene.frames) {
@@ -45,8 +46,12 @@ void SceneDrawer::drawAll(int width, int height) {
 	}
 	if (displayCount == 0) displayCount = 1;
 
+	const auto& portals = frames[frame].portals;
+
 	w = width; h = height;
 
+	static std::mutex draw_mutex;
+	draw_mutex.lock();
 	clockWiseInvert = false;
 	const FrameBuffer& f = FrameBufferGetter::get(w, h, true);
 	f.activate();
@@ -54,38 +59,59 @@ void SceneDrawer::drawAll(int width, int height) {
 	f.disable();
 	FrameBufferDrawer::draw(f);
 	FrameBufferGetter::unget();
+	draw_mutex.unlock();
 }
 
 //-----------------------------------------------------------------------------
 void SceneDrawer::drawPortal(const PortalToDraw& portal, int depth) {
 	if (depth > depthMax) return;
 
+	const auto& portals = frames[frame].portals;
+
 	// Проверка на то, находится ли полигон внутри рисуемой полуплоскости
-	if (depth == 1 || isPolygonBehindPlane(ClipPlane::getCurrentPlane(), portal.polygon)) {
-		if (isPolygonOrientedClockwise(projectPolygonToScreen(portal.polygon)) ^ (portal.isInvert ^ !clockWiseInvert)) {
+	bool isBehindPlane = depth == 1;
+	if (depth != 1) {
+		auto clipPlane = ClipPlane::getCurrentPlane() * currentTeleportMatrix.top(); 
+		isBehindPlane = isPolygonBehindPlane(clipPlane, portal.polygon);
+	}
+	if (isBehindPlane) {
+		bool isInvert = portal.isInvert;
+		if (clockWiseInvert) isInvert = !isInvert;
+		bool isDraw = isPolygonOrientedClockwise(projectPolygonToScreen(portal.polygon));
+		if (!isInvert) isDraw = !isDraw;
+		if (isDraw) {
 			if (portal.isTeleportInvert) clockWiseInvert = !clockWiseInvert;
+
 			// Рисуем портал и сцену с ним
 			const FrameBuffer& f = FrameBufferGetter::get(w, h, true);
 			f.activate();
 			ClipPlane::activate(portal.plane);
 				glMatrixMode(GL_MODELVIEW); glPushMatrix();
 				glMultMatrixf(glm::value_ptr(portal.teleport));
-					drawScene(depth+1);
+				currentTeleportMatrix.push(portal.teleport);
+					drawScene(depth + 1);
+				currentTeleportMatrix.pop();
 				glMatrixMode(GL_MODELVIEW); glPopMatrix();
-			ClipPlane::disable();
+
+			// Нельзя просто отключить плоскость, необходимо вернуть ту матрицу модельно-видового преобразования, которая была при включении этой плоскости.
+			// До того, как был написан код для вовзращения матрицы, этот код был местом серьезного бага
+			if (!currentTeleportMatrix.empty()) {
+				glPopMatrix();
+				ClipPlane::disable();
+				glPushMatrix();
+				glMultMatrixf(glm::value_ptr(currentTeleportMatrix.top()));
+			} else
+				ClipPlane::disable();
 			f.disable();
 
 			PolygonFramebufferDrawer::draw(f, portal.fragments);
 			FrameBufferGetter::unget();
+
 			if (portal.isTeleportInvert) clockWiseInvert = !clockWiseInvert;
 		} else {
 			// Рисуем обратную сторону портала с указанным цветом
 			glColor3f(portal.color.x, portal.color.y, portal.color.z);
 			drawFragments(portal.fragments);
-			/*glBegin(GL_POLYGON);
-			for (const auto& i :portal.polygon)
-				glVertex3f(i.x, i.y, i.z);
-			glEnd();*/
 		}
 	}
 }
@@ -104,13 +130,24 @@ void SceneDrawer::drawScene(int depth) {
 	const FrameBuffer& f1 = FrameBufferGetter::get(w, h, true);
 
 	for (int i = 0; i < portals.size(); ++i) {
-		f1.activate();
-		drawPortal(portals[i], depth);
-		f1.disable(false);
+		bool isDraw = true;
+		if (!currentDrawPortal.empty()) {
+			if (i % 2 == 1)
+				isDraw = i-1 != currentDrawPortal.top();
+			else
+				isDraw = i+1 != currentDrawPortal.top();
+		}
+		if (isDraw) {
+			currentDrawPortal.push(i);
+			f1.activate();
+			drawPortal(portals[i], depth);
+			f1.disable(false);
+			currentDrawPortal.pop();
 
-		f.activate(false);
-		FrameBufferMerger::merge(f, f1);
-		f.disable(false);
+			f.activate(false);
+			FrameBufferMerger::merge(f, f1);
+			f.disable(false);
+		}
 	}
 
 	FrameBufferDrawer::draw(f);
@@ -122,11 +159,6 @@ void SceneDrawer::drawScene(int depth) {
 	// Рисуем все полигоны
 	for (auto& i : colored_polygons) {
 		glColor3f(i.color.x, i.color.y, i.color.z);
-        /*glBegin(GL_TRIANGLE_FAN);
-        for (auto& j : i.polygon)
-            glVertex3f(j.x, j.y, j.z);
-        glEnd();*/
-		//drawConcavePolygon(i.polygon);
 		drawFragments(i.fragments);
 	}
 
@@ -183,9 +215,9 @@ std::pair<SceneDrawer::PortalToDraw, SceneDrawer::PortalToDraw> SceneDrawer::mak
 	p2.plane.z = -crd2.k.z;
 	p2.plane.w = dot(crd2.pos, crd2.k);
 
-	/*std::swap(p1.plane, p2.plane);
+	std::swap(p1.plane, p2.plane);
 	p1.plane.invert();
-	p2.plane.invert();*/
+	p2.plane.invert();
 
 	p1.isInvert = true;
 	p2.isInvert = false;
@@ -299,29 +331,4 @@ std::vector<glm::vec4> projectPolygonToScreen(const std::vector<glm::vec4>& poly
 	}
 
 	return result;
-}
-
-//-----------------------------------------------------------------------------
-bool isPolygonOrientedClockwise(const std::vector<glm::vec4>& polygon) {
-	double sum = 0;
-	for (int i = 0; i < polygon.size() - 1; i++)
-		sum += (polygon[i+1].x-polygon[i].x)*(polygon[i+1].y+polygon[i].y);
-	sum += (polygon[0].x-polygon[polygon.size() - 1].x)*(polygon[0].y+polygon[polygon.size() - 1].y);
-	return sum > 0;
-}
-
-bool isPolygonOrientedClockwise(const std::vector<spob::vec2>& polygon) {
-	double sum = 0;
-	for (int i = 0; i < polygon.size() - 1; i++)
-		sum += (polygon[i + 1].x - polygon[i].x)*(polygon[i + 1].y + polygon[i].y);
-	sum += (polygon[0].x - polygon[polygon.size() - 1].x)*(polygon[0].y + polygon[polygon.size() - 1].y);
-	return sum > 0;
-}
-
-//-----------------------------------------------------------------------------
-std::vector<spob::vec2> orientPolygonClockwise(const std::vector<spob::vec2>& polygon) {
-	if (isPolygonOrientedClockwise(polygon))
-		return polygon;
-	else
-		return std::vector<spob::vec2>(polygon.rbegin(), polygon.rend());
 }

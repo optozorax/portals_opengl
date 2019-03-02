@@ -29,7 +29,7 @@ void ClipPlane::disable(void) {
 	p_stack.pop_back();
 
 	if (!p_stack.empty()) {
-		Plane& p = p_stack.back();
+		Plane p = p_stack.back();
 		GLdouble plane[4] = {p.x, p.y, p.z, p.w};
     	glClipPlane(GL_CLIP_PLANE0, plane);
     	glEnable(GL_CLIP_PLANE0);
@@ -60,7 +60,6 @@ bool isPolygonBehindPlane(const Plane& plane, const std::vector<glm::vec4>& poly
 		isBehindPlane &= !isPointBehindPlane(plane, i);
 	return !isBehindPlane;
 }
-
 
 //-----------------------------------------------------------------------------
 glm::vec4 getClipPlaneEquation(void) {

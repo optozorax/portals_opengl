@@ -5,6 +5,8 @@
 
 //-----------------------------------------------------------------------------
 struct Plane : public glm::vec4 {
+	Plane() : glm::vec4() {}
+	Plane(const glm::vec4& v) : glm::vec4(v) {}
 	void invert(void);
 };
 
