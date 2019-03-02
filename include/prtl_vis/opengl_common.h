@@ -17,7 +17,7 @@ class SceneDrawer
 public:
 	SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos);
 
-	void drawAll(int width, int height);
+	int drawAll(int width, int height);
 
 	SceneDrawer& operator++(void);
 	SceneDrawer& operator--(void);
@@ -45,6 +45,8 @@ private:
 
 	struct Frame
 	{
+		std::vector<GLuint> textures;
+		std::vector<unsigned char*> texture_data;
 		std::vector<ColoredPolygonToDraw> colored_polygons;
 		std::vector<TexturedPolygonToDraw> textured_polygons;
 		std::vector<PortalToDraw> portals;
@@ -63,6 +65,7 @@ private:
 	int w, h;
 	int frame;
 	int frame_max;
+	int drawSceneCount;
 	std::stack<int> currentDrawPortal;
 	bool clockWiseInvert;
 	std::stack<glm::mat4> currentTeleportMatrix;

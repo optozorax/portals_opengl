@@ -39,7 +39,7 @@ public:
 	static void unget(void);
 	static void clear(void);
 private:
-	static std::vector<FrameBuffer> f_stack;
+	static std::vector<std::shared_ptr<FrameBuffer>> f_stack;
 	static int pos;
 	static bool isMustClear;
 };

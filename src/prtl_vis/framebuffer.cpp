@@ -1,3 +1,5 @@
+#include <memory>
+
 #include <GL/glew.h>
 
 #include <prtl_vis/shader.h>
@@ -128,15 +130,15 @@ int FrameBuffer::getHeight(void) const {
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-std::vector<FrameBuffer> FrameBufferGetter::f_stack;
+std::vector<std::shared_ptr<FrameBuffer>> FrameBufferGetter::f_stack;
 int FrameBufferGetter::pos(0);
 bool FrameBufferGetter::isMustClear(false);
 
 //-----------------------------------------------------------------------------
 const FrameBuffer& FrameBufferGetter::get(int w, int h, bool isClear) {
 	if (pos == f_stack.size())
-		f_stack.emplace_back(w, h);
-	const FrameBuffer& result(f_stack[pos]);
+		f_stack.emplace_back(new FrameBuffer(w, h));
+	const FrameBuffer& result(*f_stack[pos]);
 	if (isClear) {
 		result.activate();
 		result.disable();

@@ -8,30 +8,49 @@ Scene parseScene(const json& obj) {
 	Scene result;
 	result.cam_rotate_around = parseVec3(obj["cam_rotate_around"]);
 	result.cam_spheric_pos = parseVec3(obj["cam_spheric_pos"]);
-	for (const auto& i : obj["frames"])
-		result.frames.push_back(parseFrame(i));
+	if (obj.find("frames") != obj.end())
+		for (const auto& i : obj["frames"])
+			result.frames.push_back(parseFrame(i));
 	return result;
 }
 
 //-----------------------------------------------------------------------------
 Frame parseFrame(const json& obj) {
 	Frame result;
-	for (const auto& i : obj["colored_polygons"])
-		result.colored_polygons.push_back(parseColoredPolygon(i));
-	for (const auto& i : obj["textured_polygons"])
-		result.textured_polygons.push_back(parseTexturedPolygon(i));
-	for (const auto& i : obj["portals"])
-		result.portals.push_back(parsePortal(i));
+	if (obj.find("colored_polygons") != obj.end())
+		for (const auto& i : obj["colored_polygons"])
+			result.colored_polygons.push_back(parseColoredPolygon(i));
+	if (obj.find("textured_polygons") != obj.end())
+		for (const auto& i : obj["textured_polygons"])
+			result.textured_polygons.push_back(parseTexturedPolygon(i));
+	if (obj.find("portals") != obj.end())
+		for (const auto& i : obj["portals"])
+			result.portals.push_back(parsePortal(i));
+	if (obj.find("textures") != obj.end())
+		for (const auto& i : obj["textures"])
+			result.textures.push_back(parseTexture(i));
 	return result;
 }
 
 //-----------------------------------------------------------------------------
-//sTexture parseTexture(const json& obj) {
-//}
+Texture parseTexture(const json& obj) {
+	Texture result;
+	result.filename = obj["filename"].get<std::string>();
+	result.id = obj["id"];
+	return result;
+}
 
 //-----------------------------------------------------------------------------
 TexturedPolygon parseTexturedPolygon(const json& obj) {
 	TexturedPolygon result;
+	result.crd = parseCrd3(obj["crd"]);
+	result.texture_id = obj["texture_id"];
+	if (obj.find("polygon") != obj.end())
+		for (const auto& i : obj["polygon"])
+			result.polygon.push_back(parseVec2(i));
+	if (obj.find("tex_coords") != obj.end())
+		for (const auto& i : obj["tex_coords"])
+			result.tex_coords.push_back(parseVec2(i));
 	return result;
 }
 
@@ -40,8 +59,9 @@ ColoredPolygon parseColoredPolygon(const json& obj) {
 	ColoredPolygon result;
 	result.crd = parseCrd3(obj["crd"]);
 	result.color = parseVec3(obj["color"]);
-	for (const auto& i : obj["polygon"])
-		result.polygon.push_back(parseVec2(i));
+	if (obj.find("polygon") != obj.end())
+		for (const auto& i : obj["polygon"])
+			result.polygon.push_back(parseVec2(i));
 	return result;
 }
 
@@ -52,8 +72,9 @@ Portal parsePortal(const json& obj) {
 	result.crd2 = parseCrd3(obj["crd2"]);
 	result.color1 = parseVec3(obj["color1"]);
 	result.color2 = parseVec3(obj["color2"]);
-	for (const auto& i : obj["polygon"])
-		result.polygon.push_back(parseVec2(i));
+	if (obj.find("polygon") != obj.end())
+		for (const auto& i : obj["polygon"])
+			result.polygon.push_back(parseVec2(i));
 	return result;
 }
 
@@ -110,20 +131,24 @@ json unparse(const Frame& frame) {
 		result["colored_polygons"].push_back(unparse(i));
 	for (auto& i : frame.portals)
 		result["portals"].push_back(unparse(i));
-	// TODO texture
+	for (auto& i : frame.textures)
+		result["textures"].push_back(unparse(i));
 	return result;
 }
 
 //-----------------------------------------------------------------------------
-/*json unparse(const sTexture& texture) {
-
-}*/
+json unparse(const Texture& texture) {
+	json result;
+	result["filename"] = texture.filename;
+	result["id"] = texture.id;
+	return result;
+}
 
 //-----------------------------------------------------------------------------
 json unparse(const TexturedPolygon& textured_polygon) {
 	json result;
 	result["crd"] = unparse(textured_polygon.crd);
-	//result["texture"] = texture;
+	result["texture_id"] = textured_polygon.texture_id;
 	for (auto& i : textured_polygon.polygon)
 		result["polygon"].push_back(unparse(i));
 	for (auto& i : textured_polygon.tex_coords)

@@ -27,13 +27,15 @@ int w = 800, h = 600;
 glm::vec3 cam_spheric_pos;
 glm::vec3 cam_rotate_around;
 
-int drawTime = 0, drawCount = 0;
+int drawTime = 0, drawCount = 0, drawSceneCount = 0;
 
+//-----------------------------------------------------------------------------
 void writeFps(int value) {
 	if (drawCount != 0) {
-		std::cout << 1000.0 / (drawTime / drawCount) << " fps, drawCount: " << drawCount << std::endl;
+		std::cout << 1000.0 / (drawTime / drawCount) << " fps, drawCount: " << drawCount << ", drawSceneCount: " << drawSceneCount/drawCount << std::endl;
 		drawTime = 0;
 		drawCount = 0;
+		drawSceneCount = 0;
 	}
 	glutTimerFunc(1000, writeFps, 100);
 }
@@ -44,7 +46,7 @@ void display() {
     glClearColor(0.6, 0.6, 0.3, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	
-	sceneDrawer->drawAll(w, h);
+	drawSceneCount += sceneDrawer->drawAll(w, h);
 
 	glutSwapBuffers();
 
@@ -204,15 +206,11 @@ int main(int argc, char** argv) {
 	glutTimerFunc(1000, writeFps, 100);
 
 	glEnable(GL_DEPTH_TEST);
-	//glEnable(GL_TEXTURE_2D);
+	glColor3f(1.0f, 1.0f, 1.0f);
 
-	// Включаем сглаживание
-	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glEnable(GL_BLEND);
-	glEnable(GL_POINT_SMOOTH);
-	glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
-	glEnable(GL_LINE_SMOOTH);
-	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	// И почему это ломает цвета, когда нет текстур, а?
+	//glEnable(GL_TEXTURE_2D);
+	//glBindTexture(GL_TEXTURE_2D, 0);
 
 	init();
 	sceneDrawer = new SceneDrawer(scene::parseScene(js), cam_rotate_around, cam_spheric_pos);

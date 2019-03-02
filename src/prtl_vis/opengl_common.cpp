@@ -1,6 +1,7 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <array>
-#include <mutex>
-#include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
@@ -26,32 +27,48 @@ SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around
 				spob2glm(j.color)
 			});
 		}
-		/*for (auto& j : i.textured_polygons) {
+
+		// Считываем текстуры
+		if (i.textures.size() != 0) {
+			int texN = i.textures.size();
+			f.textures.resize(texN, 0);
+			f.texture_data.resize(texN, nullptr);
+			glGenTextures(texN, &f.textures[0]);
+			for (int j = 0; j < i.textures.size(); j++) {
+				int width, height, n;
+				f.texture_data[j] = stbi_load(i.textures[j].filename.c_str(), &width, &height, &n, 3);
+				glBindTexture(GL_TEXTURE_2D, f.textures[j]);
+				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+				gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, f.texture_data[j]);
+				glBindTexture(GL_TEXTURE_2D, 0);
+			}
+		}
+
+		// Считываем текстурированные полигоны
+		for (auto& j : i.textured_polygons) {
+			auto poly = spob2glm(j.polygon, j.crd);
+			auto tex_coords = spob2glm(j.tex_coords);
+			if (!isPolygonOrientedClockwise(poly)) {
+				poly = std::vector<glm::vec4>(poly.rbegin(), poly.rend());
+				tex_coords = std::vector<glm::vec4>(tex_coords.rbegin(), tex_coords.rend());
+			}
 			f.textured_polygons.push_back({
-				Fragmentator::fragmentize(spob2glm(j.polygon, j.crd), spob2glm(j.tex_coords)), 
-				GLuint(j.texture)
+				Fragmentator::fragmentize(poly, tex_coords),
+				f.textures[j.texture_id]
 			});
-		}*/
+		}
 	}
 	frame_max = frames.size();
 }
 
 //-----------------------------------------------------------------------------
-void SceneDrawer::drawAll(int width, int height) {
-	// Костыль для того, чтобы FrameBufferGetter очищался, потому что он черт знает почему криво работает в самый первый раз
-	static int displayCount = 0;
-	if (displayCount == 1) {
-		FrameBufferGetter::clear();
-		displayCount = 100;
-	}
-	if (displayCount == 0) displayCount = 1;
-
+int SceneDrawer::drawAll(int width, int height) {
 	const auto& portals = frames[frame].portals;
 
 	w = width; h = height;
 
-	static std::mutex draw_mutex;
-	draw_mutex.lock();
+	drawSceneCount = 0;
 	clockWiseInvert = false;
 	const FrameBuffer& f = FrameBufferGetter::get(w, h, true);
 	f.activate();
@@ -59,7 +76,8 @@ void SceneDrawer::drawAll(int width, int height) {
 	f.disable();
 	FrameBufferDrawer::draw(f);
 	FrameBufferGetter::unget();
-	draw_mutex.unlock();
+
+	return drawSceneCount;
 }
 
 //-----------------------------------------------------------------------------
@@ -120,6 +138,8 @@ void SceneDrawer::drawPortal(const PortalToDraw& portal, int depth) {
 void SceneDrawer::drawScene(int depth) {
 	if (depth > depthMax) return;
 
+	drawSceneCount++;
+
 	const auto& textured_polygons = frames[frame].textured_polygons;
 	const auto& colored_polygons = frames[frame].colored_polygons;
 	const auto& portals = frames[frame].portals;
@@ -157,19 +177,20 @@ void SceneDrawer::drawScene(int depth) {
 
 	//-------------------------------------------------------------------------
 	// Рисуем все полигоны
+	glDisable(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
 	for (auto& i : colored_polygons) {
 		glColor3f(i.color.x, i.color.y, i.color.z);
 		drawFragments(i.fragments);
 	}
+	glEnable(GL_TEXTURE_2D);
 
-	/*for (auto& i : textured_polygons) {
+	for (auto& i : textured_polygons) {
+		glColor3f(1, 1, 1);
         glBindTexture(GL_TEXTURE_2D, i.texture);
-        glBegin(GL_POLYGON);
-        for (auto& j : i.polygon)
-            glVertex3f(j.x, j.y, j.z);
-        glEnd();
+		drawFragments(i.fragments);
         glBindTexture(GL_TEXTURE_2D, 0);
-	}*/
+	}
 }
 
 //-----------------------------------------------------------------------------
