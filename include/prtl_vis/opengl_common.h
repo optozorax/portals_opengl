@@ -17,9 +17,15 @@ class SceneDrawer
 public:
 	SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos, int maxDepth);
 
+	void setCam(glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos);
+
 	int drawAll(int width, int height);
 
 	void setMaxDepth(int maxDepth) { depthMax = maxDepth; }
+	int getMaxDepth(void) const { return depthMax; }
+
+	int getCurrentFrame(void) const { return frame+1; }
+	int getMaxFrame(void) const { return frame_max; }
 
 	SceneDrawer& operator++(void);
 	SceneDrawer& operator--(void);
@@ -72,6 +78,8 @@ private:
 	bool clockWiseInvert;
 	std::stack<glm::mat4> currentTeleportMatrix;
 	std::stack<std::vector<std::vector<glm::vec4>>> projectedPortalView;
+
+	glm::vec3 cam_1, cam_2;
 };
 
 //-----------------------------------------------------------------------------

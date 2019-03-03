@@ -13,8 +13,8 @@
 
 //-----------------------------------------------------------------------------
 SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos, int maxDepth) : depthMax(maxDepth), frame(0) {
-	cam_rotate_around = spob2glm(scene.cam_rotate_around);
-	cam_spheric_pos = spob2glm(scene.cam_spheric_pos);
+	cam_1 = cam_rotate_around = spob2glm(scene.cam_rotate_around);
+	cam_2 = cam_spheric_pos = spob2glm(scene.cam_spheric_pos);
 	for (auto& i : scene.frames) {
 		frames.emplace_back();
 		Frame& f = frames.back();
@@ -62,6 +62,12 @@ SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around
 		}
 	}
 	frame_max = frames.size();
+}
+
+//-----------------------------------------------------------------------------
+void SceneDrawer::setCam(glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos) {
+	cam_rotate_around = cam_1;
+	cam_spheric_pos = cam_2;
 }
 
 //-----------------------------------------------------------------------------
