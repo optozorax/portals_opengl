@@ -200,6 +200,7 @@ void FrameBufferMerger::merge(const FrameBuffer& f1, const FrameBuffer& f2) {
 
 		ScreenFiller::fill();
 	glUseProgram(0);
+	glActiveTexture(GL_TEXTURE0);
 }
 
 //-----------------------------------------------------------------------------
@@ -294,4 +295,5 @@ void PolygonFramebufferDrawer::draw(const FrameBuffer& f1, const std::vector<Fra
 		glEnd();*/
 		drawFragments(fragments);
 	glUseProgram(0);
+	glActiveTexture(GL_TEXTURE0);
 }

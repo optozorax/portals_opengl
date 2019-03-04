@@ -147,6 +147,7 @@ void SceneDrawer::drawPortal(const PortalToDraw& portal, int depth) {
 			if (portal.isTeleportInvert) clockWiseInvert = !clockWiseInvert;
 		} else {
 			// Рисуем обратную сторону портала с указанным цветом
+			glDisable(GL_TEXTURE_2D);
 			glColor3f(portal.color.x, portal.color.y, portal.color.z);
 			drawFragments(portal.fragments);
 		}
