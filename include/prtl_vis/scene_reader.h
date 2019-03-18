@@ -43,8 +43,15 @@ namespace scene
 		int id;
 	};
 
+	struct Luminary
+	{
+		spob::vec3 pos;
+		spob::vec3 color;
+	};
+
 	struct Frame
 	{
+		std::vector<Luminary> luminaries;
 		std::vector<Texture> textures;
 		std::vector<TexturedPolygon> textured_polygons;
 		std::vector<ColoredPolygon> colored_polygons;
@@ -59,6 +66,7 @@ namespace scene
 
 	Scene parseScene(const json& obj);
 	Frame parseFrame(const json& obj);
+	Luminary parseLuminary(const json& obj);
 	Texture parseTexture(const json& obj);
 	TexturedPolygon parseTexturedPolygon(const json& obj);
 	ColoredPolygon parseColoredPolygon(const json& obj);
@@ -69,6 +77,7 @@ namespace scene
 
 	json unparse(const Scene& scene);
 	json unparse(const Frame& frame);
+	json unparse(const Luminary& luminary);
 	json unparse(const Texture& texture);
 	json unparse(const TexturedPolygon& textured_polygon);
 	json unparse(const ColoredPolygon& colored_polygon);

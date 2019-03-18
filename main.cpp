@@ -236,6 +236,8 @@ void keyboard(unsigned char key, int x, int y) {
 
 	if (key == 'h') sceneDrawer->setCam(cam_rotate_around, cam_spheric_pos);
 
+	if (key == 'l') sceneDrawer->turnLight();
+
 	update_cam();
 
 	glutPostRedisplay();
@@ -271,6 +273,7 @@ void menu(int num) {
 		case 2: keyboard('-', 0, 0); break;
 		case 3: keyboard('{', 0, 0); break;
 		case 4: keyboard('}', 0, 0); break;
+		case 5: keyboard('l', 0, 0); break;
 	}
 	glutPostRedisplay();
 }
@@ -303,6 +306,7 @@ void createMenu(void) {
 	glutAddMenuEntry("Previous frame              -", 2);
 	glutAddMenuEntry("Zoom in                     {", 3);
 	glutAddMenuEntry("Zoom out                    }", 4);
+	glutAddMenuEntry("Turn light off/on           l", 5);
 	glutAddSubMenu("Depth", depthMenu);
 	glutAddSubMenu("Show debug information", debugMenu);
 

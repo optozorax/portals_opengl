@@ -29,6 +29,17 @@ Frame parseFrame(const json& obj) {
 	if (obj.find("textures") != obj.end())
 		for (const auto& i : obj["textures"])
 			result.textures.push_back(parseTexture(i));
+	if (obj.find("luminaries") != obj.end())
+		for (const auto& i : obj["luminaries"])
+			result.luminaries.push_back(parseLuminary(i));
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+Luminary parseLuminary(const json& obj) {
+	Luminary result;
+	result.pos = parseVec3(obj["pos"]);
+	result.color = parseVec3(obj["color"]);
 	return result;
 }
 
@@ -133,6 +144,16 @@ json unparse(const Frame& frame) {
 		result["portals"].push_back(unparse(i));
 	for (auto& i : frame.textures)
 		result["textures"].push_back(unparse(i));
+	for (auto& i : frame.luminaries)
+		result["luminaries"].push_back(unparse(i));
+	return result;
+}
+
+//-----------------------------------------------------------------------------
+json unparse(const Luminary& luminary) {
+	json result;
+	result["pos"] = unparse(luminary.pos);
+	result["color"] = unparse(luminary.color);
 	return result;
 }
 

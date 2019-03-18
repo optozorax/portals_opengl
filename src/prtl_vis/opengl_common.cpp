@@ -12,7 +12,7 @@
 #include <clipper.hpp>
 
 //-----------------------------------------------------------------------------
-SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos, int maxDepth) : depthMax(maxDepth), frame(0) {
+SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos, int maxDepth) : depthMax(maxDepth), frame(0), isDrawLight(false) {
 	cam_1 = cam_rotate_around = spob2glm(scene.cam_rotate_around);
 	cam_2 = cam_spheric_pos = spob2glm(scene.cam_spheric_pos);
 	for (auto& i : scene.frames) {
@@ -60,6 +60,9 @@ SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around
 				f.textures[j.texture_id]
 			});
 		}
+
+		// Считываем источники освещения
+		f.luminaries = i.luminaries;
 	}
 	frame_max = frames.size();
 }
@@ -148,11 +151,47 @@ void SceneDrawer::drawPortal(const PortalToDraw& portal, int depth) {
 		} else {
 			// Рисуем обратную сторону портала с указанным цветом
 			glDisable(GL_TEXTURE_2D);
+			enableLight();
 			glColor3f(portal.color.x, portal.color.y, portal.color.z);
 			drawFragments(portal.fragments);
+			disableLight();
 		}
 
 		projectedPortalView.pop();
+	}
+}
+
+//-----------------------------------------------------------------------------
+void SceneDrawer::enableLight(void) {
+	const auto& luminaries = frames[frame].luminaries;
+	if (isDrawLight) {
+		glEnable(GL_COLOR_MATERIAL);
+		glEnable(GL_NORMALIZE);
+		glEnable(GL_LIGHTING);
+		for (int i = 0; i < std::min<int>(luminaries.size(), 7); i++) {
+			scene::Luminary l = luminaries[i];
+			GLfloat light_diffuse[] = {l.color.x, l.color.y, l.color.z};
+			GLfloat light_position[] = {l.pos.x, l.pos.y, l.pos.z, 1.0};
+			glEnable(GL_LIGHT0 + i);
+			glLightfv(GL_LIGHT0 + i, GL_DIFFUSE, light_diffuse);
+			glLightfv(GL_LIGHT0 + i, GL_POSITION, light_position);
+			glLightf(GL_LIGHT0 + i, GL_CONSTANT_ATTENUATION, 0.0);
+			glLightf(GL_LIGHT0 + i, GL_LINEAR_ATTENUATION, 0.05);
+			glLightf(GL_LIGHT0 + i, GL_QUADRATIC_ATTENUATION, 0);
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+void SceneDrawer::disableLight(void) {
+	const auto& luminaries = frames[frame].luminaries;
+	if (isDrawLight) {
+		for (int i = 0; i < std::min<int>(luminaries.size(), 7); i++) {
+			glDisable(GL_LIGHT0 + i);
+		}
+		glDisable(GL_LIGHTING);
+		glDisable(GL_NORMALIZE);
+		glDisable(GL_COLOR_MATERIAL);
 	}
 }
 
@@ -197,6 +236,8 @@ void SceneDrawer::drawScene(int depth) {
 	FrameBufferGetter::unget();
 	FrameBufferGetter::unget();
 
+	enableLight();
+
 	//-------------------------------------------------------------------------
 	// Рисуем все полигоны
 	glDisable(GL_TEXTURE_2D);
@@ -213,6 +254,8 @@ void SceneDrawer::drawScene(int depth) {
 		drawFragments(i.fragments);
         glBindTexture(GL_TEXTURE_2D, 0);
 	}
+
+	disableLight();
 }
 
 //-----------------------------------------------------------------------------

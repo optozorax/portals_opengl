@@ -27,6 +27,8 @@ public:
 	int getCurrentFrame(void) const { return frame+1; }
 	int getMaxFrame(void) const { return frame_max; }
 
+	void turnLight(void) { isDrawLight = !isDrawLight; }
+
 	SceneDrawer& operator++(void);
 	SceneDrawer& operator--(void);
 private:
@@ -53,6 +55,7 @@ private:
 
 	struct Frame
 	{
+		std::vector<scene::Luminary> luminaries;
 		std::vector<GLuint> textures;
 		std::vector<unsigned char*> texture_data;
 		std::vector<ColoredPolygonToDraw> colored_polygons;
@@ -67,6 +70,8 @@ private:
 	);
 	void drawScene(int depth);
 	void drawPortal(const PortalToDraw& portal, int depth);
+	void enableLight(void);
+	void disableLight(void);
 
 	std::vector<Frame> frames;
 	int depthMax;
@@ -76,6 +81,7 @@ private:
 	int drawSceneCount;
 	std::stack<int> currentDrawPortal;
 	bool clockWiseInvert;
+	bool isDrawLight;
 	std::stack<glm::mat4> currentTeleportMatrix;
 	std::stack<std::vector<std::vector<glm::vec4>>> projectedPortalView;
 
