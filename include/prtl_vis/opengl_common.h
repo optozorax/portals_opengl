@@ -89,9 +89,6 @@ private:
 };
 
 //-----------------------------------------------------------------------------
-glm::mat4 getFromMatrix(const spob::crd3& crd);
-glm::mat4 getToMatrix(const spob::crd3& crd);
-
 glm::vec4 spob2glm(const spob::vec2& vec);
 glm::vec4 spob2glm(const spob::vec3& vec);
 std::vector<glm::vec4> spob2glm(const std::vector<spob::vec3>& mas);

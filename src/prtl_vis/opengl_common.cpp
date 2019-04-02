@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtx/transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <spob/spob2glm.h>
 #include <prtl_vis/plane.h>
 #include <prtl_vis/framebuffer.h>
 #include <prtl_vis/opengl_common.h>
@@ -13,8 +14,8 @@
 
 //-----------------------------------------------------------------------------
 SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos, int maxDepth) : depthMax(maxDepth), frame(0), isDrawLight(false) {
-	cam_1 = cam_rotate_around = spob2glm(scene.cam_rotate_around);
-	cam_2 = cam_spheric_pos = spob2glm(scene.cam_spheric_pos);
+	cam_1 = cam_rotate_around = ::spob2glm(scene.cam_rotate_around);
+	cam_2 = cam_spheric_pos = ::spob2glm(scene.cam_spheric_pos);
 	for (auto& i : scene.frames) {
 		frames.emplace_back();
 		Frame& f = frames.back();
@@ -26,7 +27,7 @@ SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around
 		for (auto& j : i.colored_polygons) {
 			f.colored_polygons.push_back({
 				Fragmentator::fragmentize(spob2glm(orientPolygonClockwise(j.polygon), j.crd)),
-				spob2glm(j.color)
+				::spob2glm(j.color)
 			});
 		}
 
@@ -284,8 +285,8 @@ std::pair<SceneDrawer::PortalToDraw, SceneDrawer::PortalToDraw> SceneDrawer::mak
 	p2.teleport = getFromMatrix(crd1) * getToMatrix(crd2);
 
 	for (auto& i : polygon) {
-		p2.polygon.push_back(spob2glm(spob::plane3(crd1).from(i)));
-		p1.polygon.push_back(spob2glm(spob::plane3(crd2).from(i)));
+		p2.polygon.push_back(::spob2glm(spob::plane3(crd1).from(i)));
+		p1.polygon.push_back(::spob2glm(spob::plane3(crd2).from(i)));
 	}
 
 	p1.fragments = Fragmentator::fragmentize(p1.polygon);
@@ -314,8 +315,8 @@ std::pair<SceneDrawer::PortalToDraw, SceneDrawer::PortalToDraw> SceneDrawer::mak
 	p1.isTeleportInvert = crd1.isRight() ^ crd2.isRight();
 	p2.isTeleportInvert = crd1.isRight() ^ crd2.isRight();
 
-	p1.color = spob2glm(clr1);
-	p2.color = spob2glm(clr2);
+	p1.color = ::spob2glm(clr1);
+	p2.color = ::spob2glm(clr2);
 
 	return {p1, p2};
 }
@@ -323,21 +324,6 @@ std::pair<SceneDrawer::PortalToDraw, SceneDrawer::PortalToDraw> SceneDrawer::mak
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
-
-//-----------------------------------------------------------------------------
-glm::mat4 getFromMatrix(const spob::crd3& crd) {
-	glm::mat4 result;
-	result[0] = glm::vec4(crd.i.x, crd.j.x, crd.k.x, -crd.pos.x);
-	result[1] = glm::vec4(crd.i.y, crd.j.y, crd.k.y, -crd.pos.y);
-	result[2] = glm::vec4(crd.i.z, crd.j.z, crd.k.z, -crd.pos.z);
-	result[3] = glm::vec4(0, 0, 0, -1);
-	return glm::transpose(result);
-}
-
-//-----------------------------------------------------------------------------
-glm::mat4 getToMatrix(const spob::crd3& crd) {
-	return glm::inverse(getFromMatrix(crd));
-}
 
 //-----------------------------------------------------------------------------
 glm::vec4 spob2glm(const spob::vec2& vec) {
@@ -353,7 +339,7 @@ glm::vec4 spob2glm(const spob::vec3& vec) {
 std::vector<glm::vec4> spob2glm(const std::vector<spob::vec3>& mas) {
 	std::vector<glm::vec4> result;
 	for (const auto& i : mas)
-		result.push_back(spob2glm(i));
+		result.push_back(::spob2glm(i));
 	return result;
 }
 
@@ -361,7 +347,7 @@ std::vector<glm::vec4> spob2glm(const std::vector<spob::vec3>& mas) {
 std::vector<glm::vec4> spob2glm(const std::vector<spob::vec2>& mas) {
 	std::vector<glm::vec4> result;
 	for (const auto& i : mas)
-		result.push_back(spob2glm(i));
+		result.push_back(::spob2glm(i));
 	return result;
 }
 
@@ -369,7 +355,7 @@ std::vector<glm::vec4> spob2glm(const std::vector<spob::vec2>& mas) {
 std::vector<glm::vec4> spob2glm(const std::vector<spob::vec2>& mas, const spob::plane3& plane) {
 	std::vector<glm::vec4> result;
 	for (const auto& i : mas)
-		result.push_back(spob2glm(plane.from(i)));
+		result.push_back(::spob2glm(plane.from(i)));
 	return result;
 }
 
