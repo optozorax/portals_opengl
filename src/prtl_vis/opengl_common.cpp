@@ -133,16 +133,7 @@ void SceneDrawer::drawPortal(const PortalToDraw& portal, int depth) {
 					drawScene(depth + 1);
 				currentTeleportMatrix.pop();
 				glMatrixMode(GL_MODELVIEW); glPopMatrix();
-
-			// Нельзя просто отключить плоскость, необходимо вернуть ту матрицу модельно-видового преобразования, которая была при включении этой плоскости.
-			// До того, как был написан код для вовзращения матрицы, этот код был местом серьезного бага
-			if (!currentTeleportMatrix.empty()) {
-				glPopMatrix();
-				ClipPlane::disable();
-				glPushMatrix();
-				glMultMatrixf(glm::value_ptr(currentTeleportMatrix.top()));
-			} else
-				ClipPlane::disable();
+			ClipPlane::disable();
 			f.disable();
 
 			PolygonFramebufferDrawer::draw(f, portal.fragments);

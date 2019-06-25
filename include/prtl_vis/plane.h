@@ -17,7 +17,12 @@ public:
 	static void disable(void);
 	static Plane getCurrentPlane(void);
 private:
-	static std::vector<Plane> p_stack;
+	struct PlaneWithMatrix
+	{
+		Plane p;
+		glm::dmat4 modelview;
+	};
+	static std::vector<PlaneWithMatrix> p_stack;
 };
 
 //-----------------------------------------------------------------------------
