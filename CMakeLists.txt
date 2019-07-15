@@ -48,9 +48,8 @@ set(PORTALS_OPENGL_DIR ~/my/portals_project/portals_opengl) # https://github.com
 find_package(OpenGL REQUIRED)
 find_package(GLEW REQUIRED)
 find_package(GLUT REQUIRED)
-find_package(Freetype REQUIRED) # sudo apt install libfreetype6-dev
-include_directories(${OPENGL_INCLUDE_DIRS}  ${GLEW_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS} ${FREETYPE_INCLUDE_DIRS})
-link_libraries(${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${GLUT_LIBRARIES} ${FREETYPE_LIBRARIES})
+include_directories(${OPENGL_INCLUDE_DIRS}  ${GLEW_INCLUDE_DIRS} ${GLUT_INCLUDE_DIRS})
+link_libraries(${OPENGL_LIBRARIES} ${GLEW_LIBRARIES} ${GLUT_LIBRARIES})
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------

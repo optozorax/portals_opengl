@@ -163,13 +163,24 @@ Framebuffer - объект, содержащий в себе буфер глуб
 
 Зависимости: [glm](https://glm.g-truc.net/0.9.9/index.html), [glew](http://glew.sourceforge.net/), [glut](http://freeglut.sourceforge.net/), [spob](https://github.com/optozorax/space_objects), [clipper](http://www.angusj.com/delphi/clipper.php).
 
-Линкуете все файлы из папки `src` с файлом `main.cpp`, считая папку `include` как включаемый каталог (в gcc это опция: `-Iinclude`).
+Используете CMake.
+
+Требования к OpenGL: 3.3, так как используются framebuffer'ы.
+
+Если у вас Linux, Intel HD Graphics, OpenGL 3.0, и программа вылетает с ошибкой, возможно вам помогут следующие команды в терминале:
+
+```
+export MESA_GL_VERSION_OVERRIDE=3.3
+export MESA_GLSL_VERSION_OVERRIDE=330
+```
+
+Спасибо [StackOverflow: How can I get Opengl 3.3...](https://unix.stackexchange.com/questions/451160/how-can-i-get-opengl-3-3-with-glsl-3-3-support-through-mesa-on-an-intel-hd-gra), мне помогло.
 
 Шейдеры, необходимые для запуска программы находятся в папке `glsl`, её содержимое необходимо поместить в одну папку с программой.
 
 # TODO
 
-- [ ] Makefile
+- [x] Makefile
 - [ ] Framebuffer multisample
 - [ ] Translate to English
 - [x] Написать этот файл с объяснениями по-человечески, желательно с картинками.
