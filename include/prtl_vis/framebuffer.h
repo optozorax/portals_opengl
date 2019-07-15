@@ -3,6 +3,7 @@
 #include <GL/glew.h>
 #include <glm/glm.hpp>
 #include <vector>
+#include <memory>
 #include <prtl_vis/fragment.h>
 
 class FrameBufferDrawer;

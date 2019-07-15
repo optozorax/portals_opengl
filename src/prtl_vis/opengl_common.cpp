@@ -1,4 +1,5 @@
-#define STB_IMAGE_IMPLEMENTATION
+#define GLM_ENABLE_EXPERIMENTAL
+
 #include <stb_image.h>
 
 #include <array>

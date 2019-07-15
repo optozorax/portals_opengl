@@ -1,4 +1,5 @@
 #include <memory>
+#include <iostream>
 
 #include <GL/glew.h>
 
@@ -31,13 +32,13 @@ FrameBuffer::FrameBuffer(int width, int height) : width(width), height(height) {
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, c, 0);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, d, 0);
 
-    GLenum DrawBuffers[3] = {GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT};
-    glDrawBuffers(3, DrawBuffers);
+    GLenum DrawBuffers[2] = {GL_COLOR_ATTACHMENT0, GL_DEPTH_ATTACHMENT};
+    glDrawBuffers(2, DrawBuffers);
 
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-        throw std::exception();
+        throw std::exception();*/
 
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);*/
+    // glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     glGenTextures(1, &d);
     glBindTexture(GL_TEXTURE_2D, d);
@@ -49,13 +50,17 @@ FrameBuffer::FrameBuffer(int width, int height) : width(width), height(height) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_R_TO_TEXTURE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
 
+    glBindFramebuffer(GL_FRAMEBUFFER, f);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, c, 0);
     glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, d, 0);
 
-    GLenum DrawBuffers[3] = {GL_COLOR_ATTACHMENT0, GL_DEPTH_STENCIL_ATTACHMENT};
-    glDrawBuffers(3, DrawBuffers);
+    GLenum DrawBuffers[2] = {GL_COLOR_ATTACHMENT0, GL_DEPTH_STENCIL_ATTACHMENT};
+    glDrawBuffers(2, DrawBuffers);
 
-    if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+    auto fboStatus = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (fboStatus == GL_FRAMEBUFFER_UNSUPPORTED)
+        std::cout << "implementation is not supported by OpenGL driver " << fboStatus << std::endl;
+    if(fboStatus != GL_FRAMEBUFFER_COMPLETE)
         throw std::exception();
 
     activate();
