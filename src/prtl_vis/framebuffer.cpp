@@ -61,7 +61,7 @@ FrameBuffer::FrameBuffer(int width, int height) : width(width), height(height) {
     if (fboStatus == GL_FRAMEBUFFER_UNSUPPORTED)
         std::cout << "implementation is not supported by OpenGL driver " << fboStatus << std::endl;
     if(fboStatus != GL_FRAMEBUFFER_COMPLETE)
-        throw std::exception();
+        throw std::logic_error("Can't create framebuffer, maybe your system not support OpenGL 3.3. You can use these commands on linux, maybe it helps: `export MESA_GL_VERSION_OVERRIDE=3.3; export MESA_GLSL_VERSION_OVERRIDE=330`.");
 
     activate();
     disable();
@@ -177,7 +177,37 @@ void FrameBufferGetter::clear(void) {
 
 //-----------------------------------------------------------------------------
 FrameBufferMerger::FrameBufferMerger() {
-	program = LoadShaders("merge.vertex.glsl", "merge.fragment.glsl" );
+	std::string merge_vertex_glsl = "\
+		#version 110\n\
+		void main(){\
+		    gl_Position = gl_Vertex;\
+		}\
+	";
+	std::string merge_fragment_glsl = "\
+		#version 330 core\n\
+		out vec4 color;\
+		uniform sampler2D Color1;\
+		uniform sampler2D Depth1;\
+		uniform sampler2D Color2;\
+		uniform sampler2D Depth2;\
+		void main(){\
+			ivec2 texcoord = ivec2(floor(gl_FragCoord.xy));\
+			vec4 color1 = texelFetch(Color1, texcoord, 0);\
+			float depth1 = texelFetch(Depth1, texcoord, 0).r;\
+			vec4 color2 = texelFetch(Color2, texcoord, 0);\
+			float depth2 = texelFetch(Depth2, texcoord, 0).r;\
+		    if (depth1 < depth2) {\
+		        //color = (color1 + vec4(vec3(depth1), 1.0))/2.0;\n\
+		        color = color1;\
+		        gl_FragDepth = depth1;\
+		    } else {\
+		        //color = (color2 + vec4(vec3(depth2), 1.0))/2.0;\n\
+		        color = color2;\
+		        gl_FragDepth = depth2;\
+		    }\
+		}\
+	";
+	program = LoadShadersFromString(merge_vertex_glsl.c_str(), merge_fragment_glsl.c_str(), "merge");
 	c1ID = glGetUniformLocation(program, "Color1");
 	d1ID = glGetUniformLocation(program, "Depth1");
 	c2ID = glGetUniformLocation(program, "Color2");
@@ -214,7 +244,24 @@ void FrameBufferMerger::merge(const FrameBuffer& f1, const FrameBuffer& f2) {
 
 //-----------------------------------------------------------------------------
 FrameBufferDrawer::FrameBufferDrawer() {
-	program = LoadShaders("draw.vertex.glsl", "draw.fragment.glsl" );
+	std::string draw_vertex_glsl = "\
+		#version 110\n\
+		void main(){\
+		    gl_Position = gl_Vertex;\
+		}\
+	";
+	std::string draw_fragment_glsl = "\
+		#version 330 core\n\
+		out vec4 color;\
+		uniform sampler2D Color;\
+		uniform sampler2D Depth;\
+		void main(){\
+			ivec2 texcoord = ivec2(floor(gl_FragCoord.xy));\
+		    color = texelFetch(Color, texcoord, 0);\
+		    gl_FragDepth = texelFetch(Depth, texcoord, 0).r;\
+		}\
+	";
+	program = LoadShadersFromString(draw_vertex_glsl.c_str(), draw_fragment_glsl.c_str(), "draw");
 	cID = glGetUniformLocation(program, "Color");
 	dID = glGetUniformLocation(program, "Depth");
 }
@@ -277,7 +324,29 @@ void ScreenFiller::fill(void) {
 
 //-----------------------------------------------------------------------------
 PolygonFramebufferDrawer::PolygonFramebufferDrawer() {
-	program = LoadShaders("drawpoly.vertex.glsl", "drawpoly.fragment.glsl" );
+	std::string drawpoly_vertex_glsl = "\
+		#version 110\n\
+		void main(){\
+		    gl_Position = ftransform();\
+			// fix of the clipping bug for both Nvidia and ATi\n\
+			#ifdef __GLSL_CG_DATA_TYPES\n\
+			gl_ClipVertex = gl_ModelViewMatrix * gl_Vertex;\
+			#endif\n\
+		}\
+		// Source: https://forums.khronos.org/showthread.php/68274-How-to-activate-clip-planes-via-shader?p=331885&viewfull=1#post331885 . Thank you, ehsan2004!\n\
+	";
+	std::string drawpoly_fragment_glsl = "\
+		#version 330 core\n\
+		out vec4 color;\
+		uniform sampler2D Color;\
+		uniform sampler2D Depth;\
+		void main(){\
+			ivec2 texcoord = ivec2(floor(gl_FragCoord.xy));\
+		    color = texelFetch(Color, texcoord, 0);\
+		    gl_FragDepth = gl_FragCoord.z;\
+		}\
+	";
+	program = LoadShadersFromString(drawpoly_vertex_glsl.c_str(), drawpoly_fragment_glsl.c_str(), "drawpoly");
 	cID = glGetUniformLocation(program, "Color");
 	dID = glGetUniformLocation(program, "Depth");
 }
