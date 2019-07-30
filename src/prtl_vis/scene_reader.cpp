@@ -1,7 +1,32 @@
+#include <stb_image.h>
 #include <prtl_vis/scene_reader.h>
 
 namespace scene
 {
+
+//-----------------------------------------------------------------------------
+void loadTexture(Texture& texture) {
+	if (!texture.data) {
+		texture.data = {};
+		int n;
+		texture.data.value().image = std::make_shared<void*>(stbi_load(
+			texture.filename.c_str(), 
+			&texture.data.value().width, 
+			&texture.data.value().height, 
+			&n, 
+			3
+		));
+	}
+}
+
+//-----------------------------------------------------------------------------
+void loadTextures(Scene& scene) {
+	for (auto& i : scene.frames) {
+		for (auto& j : i.textures) {
+			loadTexture(j);
+		}
+	}
+}
 
 //-----------------------------------------------------------------------------
 Scene parseScene(const json& obj) {

@@ -1,6 +1,7 @@
 #include <GL/glew.h>
 
 #include <prtl_vis/fragment.h>
+#include <stdexcept>
 
 std::vector<Fragment> Fragmentator::fragments;
 std::vector<TexFragment> Fragmentator::texFragments;
@@ -22,7 +23,7 @@ void __stdcall Fragmentator::tessVertex1(const GLvoid *data) {
 
 //-----------------------------------------------------------------------------
 void __stdcall Fragmentator::tessError1(GLenum errorCode) {
-	throw std::exception();
+	throw std::logic_error("Error with polygons tesselation. Your polygons is wrong.");
 }
 
 //-----------------------------------------------------------------------------

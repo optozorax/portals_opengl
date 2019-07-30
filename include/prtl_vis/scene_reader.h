@@ -37,10 +37,17 @@ namespace scene
 		int texture_id;
 	};
 
+	struct TextureData
+	{
+		std::shared_ptr<void*> image;
+		int width, height;
+	};
+
 	struct Texture
 	{
 		std::string filename;
 		int id;
+		std::optional<TextureData> data;
 	};
 
 	struct Luminary
@@ -63,6 +70,9 @@ namespace scene
 		spob::vec3 cam_rotate_around, cam_spheric_pos;
 		std::vector<Frame> frames;
 	};
+
+	void loadTexture(Texture& textures);
+	void loadTextures(Scene& textures);
 
 	Scene parseScene(const json& obj);
 	Frame parseFrame(const json& obj);
