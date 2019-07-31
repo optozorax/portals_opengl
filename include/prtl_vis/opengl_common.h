@@ -57,7 +57,6 @@ private:
 	{
 		std::vector<scene::Luminary> luminaries;
 		std::vector<GLuint> textures;
-		std::vector<unsigned char*> texture_data;
 		std::vector<ColoredPolygonToDraw> colored_polygons;
 		std::vector<TexturedPolygonToDraw> textured_polygons;
 		std::vector<PortalToDraw> portals;

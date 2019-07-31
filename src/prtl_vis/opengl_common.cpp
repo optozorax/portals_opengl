@@ -14,7 +14,10 @@
 #include <clipper.hpp>
 
 //-----------------------------------------------------------------------------
-SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos, int maxDepth) : depthMax(maxDepth), frame(0), isDrawLight(false) {
+SceneDrawer::SceneDrawer(const scene::Scene& _scene, glm::vec3& cam_rotate_around, glm::vec3& cam_spheric_pos, int maxDepth) : depthMax(maxDepth), frame(0), isDrawLight(false) {
+	scene::Scene scene(_scene);
+	loadTextures(scene);
+
 	cam_1 = cam_rotate_around = ::spob2glm(scene.cam_rotate_around);
 	cam_2 = cam_spheric_pos = ::spob2glm(scene.cam_spheric_pos);
 	for (auto& i : scene.frames) {
@@ -36,15 +39,13 @@ SceneDrawer::SceneDrawer(const scene::Scene& scene, glm::vec3& cam_rotate_around
 		if (i.textures.size() != 0) {
 			int texN = i.textures.size();
 			f.textures.resize(texN, 0);
-			f.texture_data.resize(texN, nullptr);
 			glGenTextures(texN, &f.textures[0]);
 			for (int j = 0; j < i.textures.size(); j++) {
-				int width, height, n;
-				f.texture_data[j] = stbi_load(i.textures[j].filename.c_str(), &width, &height, &n, 3);
+				const auto& data = i.textures[j].data.value();
 				glBindTexture(GL_TEXTURE_2D, f.textures[j]);
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, width, height, GL_RGB, GL_UNSIGNED_BYTE, f.texture_data[j]);
+				gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, data.width, data.height, GL_RGB, GL_UNSIGNED_BYTE, *data.image);
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 		}

@@ -7,15 +7,16 @@ namespace scene
 //-----------------------------------------------------------------------------
 void loadTexture(Texture& texture) {
 	if (!texture.data) {
-		texture.data = {};
+		TextureData data;
 		int n;
-		texture.data.value().image = std::make_shared<void*>(stbi_load(
+		data.image = std::make_shared<void*>(stbi_load(
 			texture.filename.c_str(), 
-			&texture.data.value().width, 
-			&texture.data.value().height, 
+			&data.width, 
+			&data.height, 
 			&n, 
 			3
 		));
+		texture.data = data;
 	}
 }
 
