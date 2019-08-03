@@ -45,7 +45,7 @@ SceneDrawer::SceneDrawer(const scene::Scene& _scene, glm::vec3& cam_rotate_aroun
 				glBindTexture(GL_TEXTURE_2D, f.textures[j]);
 				glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-				gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, data.width, data.height, GL_RGB, GL_UNSIGNED_BYTE, *data.image);
+				gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, data.width, data.height, GL_RGB, GL_UNSIGNED_BYTE, (void*)(data.image.get()));
 				glBindTexture(GL_TEXTURE_2D, 0);
 			}
 		}

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 #include <spob/spob.h>
 #include <json.hpp>
 
@@ -39,7 +40,7 @@ namespace scene
 
 	struct TextureData
 	{
-		std::shared_ptr<void*> image;
+		std::shared_ptr<uint8_t> image;
 		int width, height;
 	};
 

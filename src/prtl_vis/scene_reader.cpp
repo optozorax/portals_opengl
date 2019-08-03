@@ -9,14 +9,16 @@ void loadTexture(Texture& texture) {
 	if (!texture.data) {
 		TextureData data;
 		int n;
-		data.image = std::make_shared<void*>(stbi_load(
-			texture.filename.c_str(), 
-			&data.width, 
-			&data.height, 
-			&n, 
-			3
-		));
-		texture.data = data;
+		void* readed = stbi_load(
+                texture.filename.c_str(),
+                &data.width,
+                &data.height,
+                &n,
+                3
+        );
+		std::shared_ptr<uint8_t> a((uint8_t*)(readed), [](uint8_t* p) { free((void*)(p)); });
+        data.image = a;
+        texture.data = data;
 	}
 }
 

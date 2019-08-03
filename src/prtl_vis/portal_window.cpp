@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <functional>
 #include <array>
+#include <stdlib.h>
 
 #include <GL/glew.h>
 #include <GL/freeglut.h>
@@ -66,6 +67,9 @@ PortalsOpenglWindow::PortalsOpenglWindow(const scene::Scene& scene, int w, int h
 		drawDepth(false),
 		drawFrame(true) 
 	{
+    putenv("MESA_GL_VERSION_OVERRIDE=3.3");
+    putenv("MESA_GLSL_VERSION_OVERRIDE=330");
+
 	int argc1 = 0;
 	char** argv1 = new char*[1];
 	argv1[0] = "";
