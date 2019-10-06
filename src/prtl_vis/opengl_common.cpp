@@ -193,6 +193,9 @@ void SceneDrawer::disableLight(void) {
 void SceneDrawer::drawScene(int depth) {
 	if (depth > depthMax) return;
 
+	double gray = std::pow(0.95, depth);
+	glClearColor(gray, gray, gray, 1.0);
+
 	drawSceneCount++;
 
 	const auto& textured_polygons = frames[frame].textured_polygons;

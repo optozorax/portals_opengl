@@ -33,8 +33,8 @@ void printText(int x, int y, const std::string& str, int w, int h) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 
-	//glColor3f(0, 0, 0);
-	glColor3f(1, 1, 1);
+	glColor3f(0, 0, 0);
+	//glColor3f(1, 1, 1);
 	c--; glRasterPos2i(x, y + 15 * c);
 	for (const auto& i : str) {
 		if (i == '\n') {
@@ -115,6 +115,7 @@ PortalsOpenglWindow::PortalsOpenglWindow(const scene::Scene& scene, int w, int h
 
 //-----------------------------------------------------------------------------
 void PortalsOpenglWindow::showWindowAndWaitClosing(void) {
+	FrameBufferGetter::clear();
 	glutMainLoop();
 }
 
@@ -133,7 +134,7 @@ void PortalsOpenglWindow::writeFps(int value) {
 //-----------------------------------------------------------------------------
 void PortalsOpenglWindow::display() {
 	int timeSinceStart = glutGet(GLUT_ELAPSED_TIME);
-	glClearColor(0.6, 0.6, 0.3, 1.0);
+	glClearColor(0.95, 0.95, 0.95, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	
 	drawSceneCount += sceneDrawer->drawAll(w, h);
@@ -229,8 +230,8 @@ void PortalsOpenglWindow::motion(int x, int y) {
 
 //-----------------------------------------------------------------------------
 void PortalsOpenglWindow::wheel(int button, int dir, int x, int y) {
-	if (dir < 0) cam_spheric_pos.z += 0.1;
-	else cam_spheric_pos.z -= 0.1;
+	if (dir < 0) cam_spheric_pos.z += 0.01 * abs(dir);
+	else cam_spheric_pos.z -= 0.01 * abs(dir);
 
 	update_cam();
 
@@ -250,6 +251,9 @@ void PortalsOpenglWindow::keyboard(unsigned char key, int x, int y) {
 
 	if (key == '{' || key == '[') wheel(0, 1, 0, 0);
 	if (key == '}' || key == ']') wheel(0, -1, 0, 0);
+
+	if (key == '(') wheel(0, 10, 0, 0);
+	if (key == ')') wheel(0, -10, 0, 0);
 
 	if (key == '+' || key == '=') ++(*sceneDrawer);
 	if (key == '-') --(*sceneDrawer);
