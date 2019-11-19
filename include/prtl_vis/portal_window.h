@@ -2,6 +2,7 @@
 
 #include <string>
 #include <memory>
+#include <chrono>
 
 #include <prtl_vis/scene_reader.h>
 #include <prtl_vis/opengl_common.h>
@@ -23,6 +24,8 @@ namespace prtl_vis
 		void showWindowAndWaitClosing(void);
 
 	private:
+		typedef std::chrono::high_resolution_clock hrc;
+
 		std::shared_ptr<SceneDrawer> sceneDrawer;
 
 		int depthMax;
@@ -39,6 +42,9 @@ namespace prtl_vis
 		bool drawDepth;
 		bool drawFrame;
 		int l_moving, l_startx, l_starty;
+		bool isRecording;
+		std::vector<std::tuple<spob::vec3, spob::vec3, double, int>> recorded;
+		double startTime;
 
 		void writeFps(int value);
 		void display(void);
@@ -51,6 +57,12 @@ namespace prtl_vis
 		void init();
 		void menu(int num);
 		void createMenu(void);
+
+		float getCurrentTime(void) {
+			static hrc::time_point t = hrc::now();
+			return std::chrono::duration<double>(hrc::now() - t).count();
+		}
+		void startStopRecording(void);
 
 		static PortalsOpenglWindow* currentThis;
 

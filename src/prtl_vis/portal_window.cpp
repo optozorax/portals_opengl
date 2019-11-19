@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <functional>
 #include <array>
+#include <fstream>
 #include <stdlib.h>
 
 #include <GL/glew.h>
@@ -65,14 +66,15 @@ PortalsOpenglWindow::PortalsOpenglWindow(const scene::Scene& scene, int w, int h
 		drawSceneDrawed(false),
 		drawCamPos(false),
 		drawDepth(false),
-		drawFrame(true) 
+		drawFrame(true),
+		isRecording(false)
 	{
-    putenv("MESA_GL_VERSION_OVERRIDE=3.3");
-    putenv("MESA_GLSL_VERSION_OVERRIDE=330");
+	//putenv("MESA_GL_VERSION_OVERRIDE=3.3");
+    //putenv("MESA_GLSL_VERSION_OVERRIDE=330");
 
 	int argc1 = 0;
 	char** argv1 = new char*[1];
-	argv1[0] = "";
+	argv1[0] = {'\0'};
 	delete[] argv1;
 
 	glutInit(&argc1, argv1);
@@ -132,7 +134,17 @@ void PortalsOpenglWindow::writeFps(int value) {
 }
 
 //-----------------------------------------------------------------------------
+spob::vec3 to(const glm::vec3& a) {
+	return spob::vec3(a.x, a.y, a.z);
+}
+
+//-----------------------------------------------------------------------------
 void PortalsOpenglWindow::display() {
+	if (isRecording) {
+		recorded.emplace_back(to(cam_rotate_around), to(cam_spheric_pos), getCurrentTime() - startTime, drawFrame);
+		startTime = getCurrentTime();
+	}
+
 	int timeSinceStart = glutGet(GLUT_ELAPSED_TIME);
 	glClearColor(0.95, 0.95, 0.95, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
@@ -141,6 +153,9 @@ void PortalsOpenglWindow::display() {
 
 	std::stringstream sout;
 
+	if (isRecording) {
+		sout << "RECORDING" << std::endl;
+	}
 	if (drawFps) {
 		sout << "FPS: " << fps << std::endl;
 	}
@@ -239,6 +254,32 @@ void PortalsOpenglWindow::wheel(int button, int dir, int x, int y) {
 }
 
 //-----------------------------------------------------------------------------
+void PortalsOpenglWindow::startStopRecording(void) {
+	if (!isRecording) {
+		recorded.clear();
+		isRecording = true;
+		startTime = getCurrentTime();
+	} else {
+		isRecording = false;
+		using namespace scene;
+
+		json result;
+		for (auto& i : recorded) {
+			json elem;
+			elem["cam_rotate_around"] = unparse(std::get<0>(i));
+			elem["cam_spheric_pos"] = unparse(std::get<1>(i));
+			elem["time"] = std::get<2>(i);
+			elem["frame"] = std::get<3>(i);
+			result.push_back(elem);
+		}
+		
+		std::ofstream fout("cam_positions.json");
+		fout << result;
+		fout.close();
+	}
+}
+
+//-----------------------------------------------------------------------------
 void PortalsOpenglWindow::keyboard(unsigned char key, int x, int y) {
 	if (key == 'd') cam_spheric_pos.x = glm::radians(glm::degrees(cam_spheric_pos.x) + 3.0);
 	if (key == 'a') cam_spheric_pos.x = glm::radians(glm::degrees(cam_spheric_pos.x) - 3.0);
@@ -263,6 +304,8 @@ void PortalsOpenglWindow::keyboard(unsigned char key, int x, int y) {
 	if (key == 'l') sceneDrawer->turnLight();
 
 	if (key == 'b') glutLeaveMainLoop();
+
+	if (key == 'r') startStopRecording();
 
 	update_cam();
 
@@ -300,6 +343,7 @@ void PortalsOpenglWindow::menu(int num) {
 		case 3: keyboard('{', 0, 0); break;
 		case 4: keyboard('}', 0, 0); break;
 		case 5: keyboard('l', 0, 0); break;
+		case 6: keyboard('r', 0, 0); break;
 	}
 	glutPostRedisplay();
 }
@@ -328,11 +372,12 @@ void PortalsOpenglWindow::createMenu(void) {
 
 	int mainMenu = glutCreateMenu(_menu);
 	glutAddMenuEntry("Move cam to start position  h", 0);
-	glutAddMenuEntry("Next frame				  +", 1);
-	glutAddMenuEntry("Previous frame			  -", 2);
-	glutAddMenuEntry("Zoom in					 {", 3);
-	glutAddMenuEntry("Zoom out					}", 4);
-	glutAddMenuEntry("Turn light off/on		   l", 5);
+	glutAddMenuEntry("Next frame                  +", 1);
+	glutAddMenuEntry("Previous frame              -", 2);
+	glutAddMenuEntry("Zoom in                     {", 3);
+	glutAddMenuEntry("Zoom out                    }", 4);
+	glutAddMenuEntry("Turn light off/on           l", 5);
+	glutAddMenuEntry("Start/stop recording        r", 0);
 	glutAddSubMenu("Depth", depthMenu);
 	glutAddSubMenu("Show debug information", debugMenu);
 

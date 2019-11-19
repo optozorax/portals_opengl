@@ -5,6 +5,7 @@
 #include <memory>
 #include <spob/spob.h>
 #include <json.hpp>
+#include <optional>
 
 namespace scene
 {

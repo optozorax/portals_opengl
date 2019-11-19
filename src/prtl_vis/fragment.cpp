@@ -7,7 +7,7 @@ std::vector<Fragment> Fragmentator::fragments;
 std::vector<TexFragment> Fragmentator::texFragments;
 
 //-----------------------------------------------------------------------------
-void __stdcall  Fragmentator::tessBegin1(GLenum which) {
+void __stdcall Fragmentator::tessBegin1(GLenum which) {
 	fragments.push_back({int(which), {}});
 }
 
