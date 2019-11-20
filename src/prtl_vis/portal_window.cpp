@@ -141,7 +141,7 @@ spob::vec3 to(const glm::vec3& a) {
 //-----------------------------------------------------------------------------
 void PortalsOpenglWindow::display() {
 	if (isRecording) {
-		recorded.emplace_back(to(cam_rotate_around), to(cam_spheric_pos), getCurrentTime() - startTime, drawFrame);
+		recorded.emplace_back(to(cam_rotate_around), to(cam_spheric_pos), getCurrentTime() - startTime, sceneDrawer->getCurrentFrame());
 		startTime = getCurrentTime();
 	}
 
@@ -261,20 +261,8 @@ void PortalsOpenglWindow::startStopRecording(void) {
 		startTime = getCurrentTime();
 	} else {
 		isRecording = false;
-		using namespace scene;
-
-		json result;
-		for (auto& i : recorded) {
-			json elem;
-			elem["cam_rotate_around"] = unparse(std::get<0>(i));
-			elem["cam_spheric_pos"] = unparse(std::get<1>(i));
-			elem["time"] = std::get<2>(i);
-			elem["frame"] = std::get<3>(i);
-			result.push_back(elem);
-		}
-		
 		std::ofstream fout("cam_positions.json");
-		fout << result;
+		fout << scene::unparse(recorded);
 		fout.close();
 	}
 }

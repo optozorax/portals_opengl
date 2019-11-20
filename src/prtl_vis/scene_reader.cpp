@@ -32,6 +32,20 @@ void loadTextures(Scene& scene) {
 }
 
 //-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+CamPositions parseCamPositions(const json& obj) {
+	CamPositions result;
+	if (obj.is_array())
+		for (const auto& i : obj) {
+			result.emplace_back(parseVec3(i["cam_rotate_around"]), parseVec3(i["cam_spheric_pos"]), float(i["time"]), int(i["frame"]));
+		}
+	return result;
+}
+
+//-----------------------------------------------------------------------------
 Scene parseScene(const json& obj) {
 	Scene result;
 	result.cam_rotate_around = parseVec3(obj["cam_rotate_around"]);
@@ -147,6 +161,20 @@ spob::vec2 parseVec2(const json& obj) {
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+json unparse(const CamPositions& cam_positions) {
+	json result;
+	for (auto& i : cam_positions) {
+		json elem;
+		elem["cam_rotate_around"] = unparse(i.cam_rotate_around);
+		elem["cam_spheric_pos"] = unparse(i.cam_spheric_pos);
+		elem["time"] = i.time;
+		elem["frame"] = i.frame;
+		result.push_back(elem);
+	}
+	return result;
+}
 
 //-----------------------------------------------------------------------------
 json unparse(const Scene& scene) {

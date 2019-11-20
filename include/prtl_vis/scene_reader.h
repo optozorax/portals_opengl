@@ -73,9 +73,21 @@ namespace scene
 		std::vector<Frame> frames;
 	};
 
+	struct CamPosition
+	{
+		CamPosition(const spob::vec3& cam_rotate_around, const spob::vec3& cam_spheric_pos, double time, int frame) : cam_rotate_around(cam_rotate_around), cam_spheric_pos(cam_spheric_pos), time(time), frame(frame) {}
+
+		spob::vec3 cam_rotate_around, cam_spheric_pos;
+		double time;
+		int frame;
+	};
+
+	typedef std::vector<CamPosition> CamPositions;
+
 	void loadTexture(Texture& textures);
 	void loadTextures(Scene& textures);
 
+	CamPositions parseCamPositions(const json& obj);
 	Scene parseScene(const json& obj);
 	Frame parseFrame(const json& obj);
 	Luminary parseLuminary(const json& obj);
@@ -87,6 +99,7 @@ namespace scene
 	spob::vec3 parseVec3(const json& obj);
 	spob::vec2 parseVec2(const json& obj);
 
+	json unparse(const CamPositions& cam_positions);
 	json unparse(const Scene& scene);
 	json unparse(const Frame& frame);
 	json unparse(const Luminary& luminary);

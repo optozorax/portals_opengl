@@ -43,7 +43,7 @@ namespace prtl_vis
 		bool drawFrame;
 		int l_moving, l_startx, l_starty;
 		bool isRecording;
-		std::vector<std::tuple<spob::vec3, spob::vec3, double, int>> recorded;
+		scene::CamPositions recorded;
 		double startTime;
 
 		void writeFps(int value);
