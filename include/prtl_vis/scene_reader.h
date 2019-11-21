@@ -65,6 +65,7 @@ namespace scene
 		std::vector<TexturedPolygon> textured_polygons;
 		std::vector<ColoredPolygon> colored_polygons;
 		std::vector<Portal> portals;
+		std::optional<spob::vec3> center;
 	};
 
 	struct Scene
@@ -110,4 +111,26 @@ namespace scene
 	json unparse(const spob::crd3& crd);
 	json unparse(const spob::vec3& vec);
 	json unparse(const spob::vec2& vec);
+
+	template<typename T, typename ParseFunction>
+	std::optional<T> parseOptional(const json& obj, ParseFunction parse) {
+		if (obj.find("used") != obj.end() && bool(obj["used"])) {
+			return std::optional<T>(parse(obj["object"]));
+		}
+		else {
+			return std::nullopt;
+		}
+	}
+
+	template<class T>
+	json unparse(const std::optional<T>& obj) {
+		json result;
+		if (obj) {
+			result["used"] = true;
+			result["object"] = unparse(obj.value());
+		} else {
+			result["used"] = false;
+		}
+		return result;
+	}
 };

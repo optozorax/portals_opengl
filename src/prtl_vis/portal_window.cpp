@@ -14,6 +14,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <spob/spob.h>
+#include <spob/spob2glm.h>
 
 #include <prtl_vis/portal_window.h>
 #include <prtl_vis/plane.h>
@@ -134,14 +135,9 @@ void PortalsOpenglWindow::writeFps(int value) {
 }
 
 //-----------------------------------------------------------------------------
-spob::vec3 to(const glm::vec3& a) {
-	return spob::vec3(a.x, a.y, a.z);
-}
-
-//-----------------------------------------------------------------------------
 void PortalsOpenglWindow::display() {
 	if (isRecording) {
-		recorded.emplace_back(to(cam_rotate_around), to(cam_spheric_pos), getCurrentTime() - startTime, sceneDrawer->getCurrentFrame());
+		recorded.emplace_back(spob::glm2spob(cam_rotate_around), spob::glm2spob(cam_spheric_pos), getCurrentTime() - startTime, sceneDrawer->getCurrentFrame() - 1);
 		startTime = getCurrentTime();
 	}
 
@@ -192,6 +188,12 @@ void PortalsOpenglWindow::display() {
 
 //-----------------------------------------------------------------------------
 void PortalsOpenglWindow::update_cam(void) {
+	auto center = sceneDrawer->getCurrentFrameCenter();
+
+	if (center) {
+		cam_rotate_around = spob::spob2glm(center.value());
+	}
+
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(90.0, double(w)/h, 0.1, 1000.0);

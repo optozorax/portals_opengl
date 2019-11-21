@@ -24,6 +24,8 @@ public:
 	void setMaxDepth(int maxDepth) { depthMax = maxDepth; }
 	int getMaxDepth(void) const { return depthMax; }
 
+	std::optional<spob::vec3> getCurrentFrameCenter(void) const { return frames[frame].center; }
+
 	int getCurrentFrame(void) const { return frame+1; }
 	int getMaxFrame(void) const { return frame_max; }
 
@@ -60,6 +62,7 @@ private:
 		std::vector<ColoredPolygonToDraw> colored_polygons;
 		std::vector<TexturedPolygonToDraw> textured_polygons;
 		std::vector<PortalToDraw> portals;
+		std::optional<spob::vec3> center;
 	};
 
 	static std::pair<PortalToDraw, PortalToDraw> makeDrawPortal(

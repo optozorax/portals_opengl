@@ -66,6 +66,8 @@ SceneDrawer::SceneDrawer(const scene::Scene& _scene, glm::vec3& cam_rotate_aroun
 
 		// Считываем источники освещения
 		f.luminaries = i.luminaries;
+
+		f.center = i.center;
 	}
 	frame_max = frames.size();
 }

@@ -74,6 +74,8 @@ Frame parseFrame(const json& obj) {
 	if (obj.find("luminaries") != obj.end())
 		for (const auto& i : obj["luminaries"])
 			result.luminaries.push_back(parseLuminary(i));
+	if (obj.find("center") != obj.end())
+		result.center = parseOptional<spob::vec3>(obj["center"], parseVec3);
 	return result;
 }
 
@@ -202,6 +204,7 @@ json unparse(const Frame& frame) {
 		result["textures"].push_back(unparse(i));
 	for (auto& i : frame.luminaries)
 		result["luminaries"].push_back(unparse(i));
+	result["center"] = unparse(frame.center);
 	return result;
 }
 
