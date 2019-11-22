@@ -112,6 +112,16 @@ namespace scene
 	json unparse(const spob::vec3& vec);
 	json unparse(const spob::vec2& vec);
 
+	inline int parseInt(const scene::json& obj) {
+		return obj;
+	}
+
+	inline scene::json unparse(const int& i) {
+		scene::json result;
+		result = i;
+		return result;
+	}
+
 	template<typename T, typename ParseFunction>
 	std::optional<T> parseOptional(const json& obj, ParseFunction parse) {
 		if (obj.find("used") != obj.end() && bool(obj["used"])) {
