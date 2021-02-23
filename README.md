@@ -226,7 +226,7 @@ Framebuffer - объект, содержащий в себе буфер глуб
 
 Зависимости: [glm](https://glm.g-truc.net/0.9.9/index.html), [glew](http://glew.sourceforge.net/), [glut](http://freeglut.sourceforge.net/), [spob](https://github.com/optozorax/space_objects), [clipper](http://www.angusj.com/delphi/clipper.php).
 
-Используете CMake.
+Используете CMake. Смотрите в файл `CMakeLists.txt`, там находятся инструкции и ссылки на зависимости, которые надо скачать.
 
 Требования к OpenGL: 3.3, так как используются framebuffer'ы.
 

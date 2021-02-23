@@ -75,7 +75,7 @@ PortalsOpenglWindow::PortalsOpenglWindow(const scene::Scene& scene, int w, int h
 
 	int argc1 = 0;
 	char** argv1 = new char*[1];
-	argv1[0] = {'\0'};
+	argv1[0] = "";
 	delete[] argv1;
 
 	glutInit(&argc1, argv1);

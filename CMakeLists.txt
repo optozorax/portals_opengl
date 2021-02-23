@@ -3,19 +3,22 @@ project(portals_debug)
 
 ##############################################################################
 # ENABLE WHEN DEBUG
-set(CMAKE_BUILD_TYPE Debug)
+# set(CMAKE_BUILD_TYPE Debug)
 ##############################################################################
 
+set(CMAKE_CXX_STANDARD 17)
 set_property(GLOBAL PROPERTY CXX_STANDARD 17)
 set(OpenGL_GL_PREFERENCE GLVND)
 
 #-----------------------------------------------------------------------------
 # Set here your code locations
-set(MY_STB_DIR ~/my/portals_project/my_stb)                 # https://github.com/nothings/stb + my_stb (see below)
-set(JSON_DIR ~/my/portals_project/json)                     # https://github.com/nlohmann/json
-set(CLIPPER_DIR ~/my/portals_project/clipper)               # https://sourceforge.net/projects/polyclipping/
-set(SPACE_OBJECTS_DIR ~/my/portals_project/space_objects)   # https://github.com/optozorax/space_objects
-set(PORTALS_OPENGL_DIR ~/my/portals_project/portals_opengl) # https://github.com/optozorax/portals_opengl
+set(ALL_DIR ~/testing)
+set(MY_STB_DIR ${ALL_DIR}/my_stb)                 # https://github.com/nothings/stb + my_stb (see below)
+                                                  # https://github.com/optozorax/my_stb
+set(JSON_DIR ${ALL_DIR}/json)                     # https://github.com/nlohmann/json
+set(CLIPPER_DIR ${ALL_DIR}/clipper/cpp)           # https://sourceforge.net/projects/polyclipping/
+set(SPACE_OBJECTS_DIR ${ALL_DIR}/space_objects)   # https://github.com/optozorax/space_objects
+set(PORTALS_OPENGL_DIR ${ALL_DIR}/portals_opengl) # https://github.com/optozorax/portals_opengl
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -66,9 +69,9 @@ link_libraries(my_stb)
 
 #-----------------------------------------------------------------------------
 add_library(json STATIC 
-	${JSON_DIR}/json.hpp
+	${JSON_DIR}/single_include/nlohmann/json.hpp
 )
-include_directories(${JSON_DIR}/)
+include_directories(${JSON_DIR}/single_include/nlohmann/)
 #-----------------------------------------------------------------------------
 
 #-----------------------------------------------------------------------------
@@ -86,6 +89,7 @@ add_library(portals_opengl STATIC
 	${PORTALS_OPENGL_DIR}/src/prtl_vis/fragment.cpp
 	${PORTALS_OPENGL_DIR}/src/prtl_vis/framebuffer.cpp
 	${PORTALS_OPENGL_DIR}/src/prtl_vis/opengl_common.cpp
+	${PORTALS_OPENGL_DIR}/src/prtl_vis/portal_window.cpp
 	${PORTALS_OPENGL_DIR}/src/prtl_vis/plane.cpp
 	${PORTALS_OPENGL_DIR}/src/prtl_vis/scene_reader.cpp
 	${PORTALS_OPENGL_DIR}/src/prtl_vis/shader.cpp
@@ -120,4 +124,4 @@ link_libraries(space_objects)
 
 # Replace DEBUG to RELEASE if needed
 
-add_executable(portals_viewer_DEBUG ${PORTALS_OPENGL_DIR}/main.cpp)
+add_executable(portals_viewer_RELEASE ${PORTALS_OPENGL_DIR}/main.cpp)

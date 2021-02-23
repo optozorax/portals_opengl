@@ -1,0 +1,7 @@
+CMakeCache.txt
+CMakeFiles/
+lib*.a
+Makefile
+cmake_install.cmake
+portals_viewer_RELEASE
+portals_viewer_DEBUG
