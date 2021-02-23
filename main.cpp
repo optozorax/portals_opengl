@@ -13,7 +13,7 @@ int main(int argc, char** argv) {
 	fin >> js;
 	fin.close();
 
-	prtl_vis::PortalsOpenglWindow window(scene::parseScene(js));
+	prtl_vis::PortalsOpenglWindow window(scene::parseScene(js), 0, 0, filename);
 	window.showWindowAndWaitClosing();
 
 	// It also possible
